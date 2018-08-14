@@ -213,6 +213,19 @@ function defineFuncForTabSpacing () {
 			efficiencyMeter.redrawWithNewArgs({meterVal: 0.9});
 		}, 7000)
  
+		const gaugeGroup = graphicGroup.append('g').attr('transform', 'translate(300, 340)')
+		const timerGauge = new Gauge(gaugeGroup, 300, 200, 200, 600, true);
+		timerGauge.create();
+
+		setTimeout(() => {
+			timerGauge.redrawWithNewArgs({gaugeVal: 10});
+		}, 4000)
+		setTimeout(() => {
+			timerGauge.redrawWithNewArgs({gaugeVal: 580});
+		}, 8000)
+
+
+
 	};
 	
 
