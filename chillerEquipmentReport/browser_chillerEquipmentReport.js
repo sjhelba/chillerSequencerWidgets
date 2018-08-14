@@ -1,7 +1,6 @@
 'use strict';
 function defineFuncForTabSpacing () {
 
-
 	////////// Hard Coded Defs //////////
 	const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
 	const formatIntoPercentage = d3.format('.0%');
@@ -60,126 +59,6 @@ function defineFuncForTabSpacing () {
 
 //chiller equipment report
 
-//Hard Coded Classes
-class Meter {
-	constructor(elementToAppendTo, backgroundColor, foregroundBarColor, height, width, title, units, precision, titleFont, unitsFont, numFont, meterVal, minVal, maxVal, designVal) {
-		this.elementToAppendTo = elementToAppendTo;
-		this.backgroundColor = backgroundColor;
-		this.foregroundBarColor = foregroundBarColor;
-		this.height = height;
-		this.width = width;
-		this.title = title;
-		this.units = units,
-		this.precision = precision;
-		this.fonts = {titleFont, unitsFont, numFont};
-		this.heights = {title: getTextHeight(titleFont), units: getTextHeight(unitsFont), num: getTextHeight(numFont)}
-		this.meterVal = meterVal;
-		this.minVal = minVal;
-		this.maxVal = maxVal;
-		this.designVal = designVal;
-		this.greatestTextHeight = d3.max([getTextHeight(titleFont), getTextHeight(unitsFont), getTextHeight(numFont)]);
-		this.margin = 3;
-		this.horizontalTextPadding = 10;
-		this.verticalTextPadding = 2;
-		this.backgroundBarColor = 'gray';
-		this.textColor = 'black';
-		this.barLength = this.width - (this.margin * 2);
-		this.barHeight = this.height - ( (this.margin * 2) + this.greatestTextHeight + this.verticalTextPadding );
-	
-	}
-
-	create() {
-		const meterGroup = this.elementToAppendTo.append('g')
-			.attr('class', 'meterGroup')
-			.attr('transform', `translate(${this.margin}, ${this.margin})`);
-
-		const barGroup = meterGroup.append('g')
-			.attr('class', 'barGroup')
-			.attr('transform', `translate(0, ${this.greatestTextHeight + this.verticalTextPadding})`)
-		//backgroundBar
-		barGroup.append('rect')
-			.attr('class', 'backgroundBar')
-			.attr('height', this.barHeight)
-			.attr('width', this.barLength)
-			.attr('fill', this.backgroundBarColor)
-			.attr('stroke', 'none')
-			.attr('rx', 5)
-			.attr('ry', 5);
-		//foregroundBar
-		barGroup.append('rect')
-			.attr('class', 'foregroundBar')
-			.attr('height', this.barHeight)
-			.attr('width', scaleValue(this.meterVal, this.minVal, this.maxVal, this.barLength))
-			.attr('fill', this.foregroundBarColor)
-			.attr('stroke', 'none')
-			.attr('rx', 5)
-			.attr('ry', 5);
-		if (this.designVal || this.designVal === 0) {
-			//designValBar
-			barGroup.append('rect')
-				.attr('class', 'designValBar')
-				.attr('height', this.barHeight)
-				.attr('width', this.barHeight * 0.2)
-				.attr('x', scaleValue(this.designVal, this.minVal, this.maxVal, this.barLength))
-				.attr('fill', this.backgroundColor)
-				.attr('stroke', 'none');
-		}
-		// invisible hoverable bar
-		barGroup.append('rect')
-			.attr('class', 'invisibleHoverableBar')
-			.attr('height', this.barHeight)
-			.attr('width', this.barLength)
-			.attr('opacity', '0')
-			.attr('rx', 5)
-			.attr('ry', 5)
-			.on('mouseover', showTooltip)
-			.on('mouseout', hideTooltip);
-
-		const textGroup = meterGroup.append('g')
-			.attr('class', 'textGroup')
-			.attr('transform', `translate(0, ${this.greatestTextHeight})`)
-			.attr('pointer-events', 'none')
-			
-		//meterValText
-		textGroup.append('text')
-			.attr('class', 'meterValText')
-			.style('font', this.fonts.numFont)
-			.text(formatValue(this.meterVal, this.precision))
-			.attr('fill', this.textColor)
-			.attr('x', 0)
-		//unitsText
-		textGroup.append('text')
-			.attr('class', 'unitsText')
-			.style('font', this.fonts.unitsFont)
-			.text(this.units)
-			.attr('fill', this.textColor)
-			.attr('x', getTextWidth(formatValue(this.meterVal, this.precision)) + this.horizontalTextPadding)
-		//titleText
-		textGroup.append('text')
-			.attr('class', 'titleText')
-			.style('font', this.fonts.titleFont)
-			.text(this.title)
-			.attr('fill', this.textColor)
-			.attr('text-anchor', 'end')
-			.attr('x', this.width - this.margin)
-
-
-
-		function showTooltip() {
-			//create another class for tooltip to manipulate from here
-			console.log('show tooltip')
-		}
-		function hideTooltip() {
-			console.log('hide tooltip')
-		}
-		function formatValue(value, precision) {return d3.format(',.' + precision + 'f')(value)}
-		function scaleValue(value, minVal, maxVal, barLength) {
-			var x = d3.scaleLinear().domain([minVal, maxVal]).range([0, barLength]);
-			return x(value);
-		}
-	}
-
-}
 
 
 
@@ -243,8 +122,8 @@ class Meter {
 		properties.forEach(prop => data[prop.name] = prop.value);
 
 		// FROM JQ //
-		data.jqHeight = 150;
-		data.jqWidth = 150;
+		data.jqHeight = 550;
+		data.jqWidth = 550;
 
 		// SIZING //
 		data.graphicHeight = data.jqHeight - (margin.top + margin.bottom);
@@ -310,12 +189,30 @@ class Meter {
 
 		// ********************************************* GRAPHIC GROUP ******************************************************* //
 		const graphicGroup = widget.svg.append('g').attr('class', 'graphicGroup');
+		const tooltipGroup = graphicGroup.append('g').attr('class', 'tooltipGroup').attr('transform', 'translate(300, 140)')
 		
-		const myMeter = new Meter(graphicGroup, 'white', 'blue', 30, 150, 'DP', 'psi', 1, '10.0pt Nirmala UI', 'bold 8.0pt Nirmala UI', 'bold 11.0pt Nirmala UI', 4.7386745645, 0.1, 8.5, 4)
-		myMeter.create();
-		// ********************************************* OUTER ELLIPSE ******************************************************* //
+		const DPMeter = new Meter(graphicGroup, tooltipGroup, 'white', '#33adff', 30, 150, 'DP', 'psi', 1, '10.0pt Nirmala UI', 'bold 8.0pt Nirmala UI', 'bold 11.0pt Nirmala UI', 4.7386745645, 0.1, 8.5, 4)
+		DPMeter.create();
 
+		const tonsGroup = graphicGroup.append('g').attr('transform', 'translate(0, 120)')
+		const tonsMeter = new Meter(tonsGroup, tooltipGroup, 'white', '#004d80', 30, 150, 'Tons', 'tR', 0, '10.0pt Nirmala UI', 'bold 8.0pt Nirmala UI', 'bold 11.0pt Nirmala UI', 760, 0, 1000);
+		tonsMeter.create();
 
+		setTimeout(() => {
+			DPMeter.redrawWithNewArgs({meterVal: 2, maxVal: 7});
+		}, 2000)
+		setTimeout(() => {
+			DPMeter.redrawWithNewArgs({meterVal: 6});
+		}, 7000)
+
+		const efficiencyGroup = graphicGroup.append('g').attr('transform', 'translate(0, 320)')
+		const efficiencyMeter = new Meter(efficiencyGroup, tooltipGroup, 'white', '#00cc00', 30, 150, 'Efficiency', 'kW/tR', 3, '10.0pt Nirmala UI', 'bold 8.0pt Nirmala UI', 'bold 11.0pt Nirmala UI', 0.540, 2, 0);
+		efficiencyMeter.create();
+
+		setTimeout(() => {
+			efficiencyMeter.redrawWithNewArgs({meterVal: 0.9});
+		}, 7000)
+ 
 	};
 	
 
