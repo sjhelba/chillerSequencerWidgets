@@ -54,7 +54,7 @@ function defineFuncForTabSpacing () {
 		//return false if nothing prompted true
 		return false;
 	};
-
+	const margin = {top: 5, left: 5, right: 5, bottom: 5};
 
 
 	////////////////////////////////////////////////////////////////
@@ -103,6 +103,7 @@ function defineFuncForTabSpacing () {
 	];
 
 
+
 	////////////////////////////////////////////////////////////////
 		// /* SETUP DEFINITIONS AND DATA */
 	////////////////////////////////////////////////////////////////
@@ -116,9 +117,8 @@ function defineFuncForTabSpacing () {
 		data.jqWidth = 150;
 
 		// SIZING //
-		data.margin = {top: 5, left: 5, right: 5, bottom: 5};
-		data.graphicHeight = data.jqHeight - (data.margin.top + data.margin.bottom);
-		data.graphicWidth = data.jqWidth - (data.margin.left + data.margin.right);
+		data.graphicHeight = data.jqHeight - (margin.top + margin.bottom);
+		data.graphicWidth = data.jqWidth - (margin.left + margin.right);
 
 		// GLOBALS PER INSTANCE //
 		if (!widget.hovered) widget.hovered = { optimized: false, standard: false, current: 'neither' };

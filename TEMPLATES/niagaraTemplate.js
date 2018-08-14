@@ -56,6 +56,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		//return false if nothing prompted true
 		return false;
 	};
+	const margin = {top: 5, left: 5, right: 5, bottom: 5};
 
 
 ////////////////////////////////////////////////////////////////
@@ -117,8 +118,12 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 		// FROM JQ //
 		const jq = widget.jq();
-		data.graphicWidth = jq.width() || 350;
-		data.graphicHeight = jq.height() || 400;
+
+		//SIZING
+		data.jqHeight = jq.height() || 400;
+		data.jqWidth = jq.width() || 350;
+		data.graphicHeight = data.jqHeight - (margin.top + margin.bottom);
+		data.graphicWidth = data.jqWidth - (margin.left + margin.right);
 
 
 		// GLOBALS PER INSTANCE
