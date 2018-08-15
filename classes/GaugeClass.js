@@ -1,23 +1,22 @@
 
 class Gauge {
-	constructor(elementToAppendGaugeTo, gaugeVal, height = 200, width = 200, minVal = 600, timer = true) {
+	constructor(elementToAppendGaugeTo, timerType = 'On', onReason = 'Temperature', preset = 15, timeLeft = 15, height = 125, width = 125) {
+    this.timerType = timerType // On, Off, or COS
+    this.onReason = onReason // Efficiency, Temperature, or Flow
     this.height = height;
     this.width = width;
-		this.gaugeVal = gaugeVal;
-    this.previousGaugeVal = gaugeVal;
+		this.timeLeft = timeLeft;
+    this.previoustimeLeft = timeLeft;
     this.margin = 5;
+    this.verticalPadding = 5;
     this.backgroundArcColor = '#e0ebeb';
     this.startAngle = -Math.PI;
     this.endAngle = Math.PI;
-    this.gaugeArcThickness = 18;
-    this.titleFont = '12.0pt Nirmala UI';
-    this.minVal = minVal //secondsCountingFrom if timer;
-    this.maxVal = 0;
-    this.timer = timer;
-
-
-
-
+    this.gaugeArcThickness = 15;
+    this.title1Font = 'bold 12.0pt Nirmala UI';
+    this.title2Font = '10.0pt Nirmala UI';
+    this.minVal = 0; //secondsCountingFrom if timer
+    this.maxVal = preset;
     this.calculateCalculatedProps();
     this.element = elementToAppendGaugeTo.append('g')
       .attr('class', 'gaugeElement')
@@ -39,32 +38,31 @@ class Gauge {
     //gaugeArc
     chartGroup.append('path')
       .attr('class', 'gaugeArc')
-      .datum({ endAngle: this.angleScale(this.previousGaugeVal) })
-      // fill nominal color for non-efficiency gauge or 3 color scale for efficiency gauge. Starts with min val color prior to transition
-      .attr('fill', this.timer ? this.colorScale(this.previousGaugeVal) : '#00cc66')
-      .attr('d', this.gaugeArcGenerator(this.angleScale(this.previousGaugeVal)))
+      .datum({ endAngle: this.angleScale(this.previoustimeLeft) })
+      .attr('fill', this.foregroundArcColor)
+      .attr('d', this.gaugeArcGenerator(this.angleScale(this.previoustimeLeft)))
       .transition()
-        .duration(1000)
-        // if efficiency graph, transition from min val scale color to actual val's scale color
-        .attr('fill', this.timer ? this.colorScale(this.gaugeVal) : '#00cc66')
+        .duration(250)
         // gradually transition end angle from minValForArc to true val angle
-        .attrTween('d', this.arcTween(this.angleScale(this.gaugeVal)));
+        .attrTween('d', this.arcTween(this.angleScale(this.timeLeft)));
 
     //title1
     chartGroup.append("text")
       .attr('dominant-baseline', 'text-after-edge')
       .style("text-anchor", "middle")
-      .attr('y', -(30))
-      .style('font', this.titleFont)
-      .text('On');
+      .attr('y', this.title1Y)
+      .style('font', this.title1Font)
+      .text(this.title1);
 
-    //title2
-    chartGroup.append("text")
-      .attr('dominant-baseline', 'text-after-edge')
-      .style("text-anchor", "middle")
-      .attr('y', -(10))
-      .style('font', this.titleFont)
-      .text('Efficiency');
+    if (this.timerType === 'On') {
+      //title2
+      chartGroup.append("text")
+        .attr('dominant-baseline', 'text-after-edge')
+        .style("text-anchor", "middle")
+        .attr('y', this.title2Y)
+        .style('font', this.title2Font)
+        .text(this.timeLeft === 0 ? '' : this.onReason);
+    }
 
 
     return this.element;
@@ -75,6 +73,16 @@ class Gauge {
   }
 
   calculateCalculatedProps() {
+    this.title1 = this.timeLeft === 0 ? '' : this.timeLeft <= 10 ? this.timeLeft + ' sec' : this.timerType;
+    if (this.timerType === 'On') {
+      this.title1Y = -(this.verticalPadding / 2);
+      this.title2Y = (this.verticalPadding / 2) + getTextHeight(this.title2Font);
+      this.foregroundArcColor = 'orange';
+    } else {
+      this.title1Y = getTextHeight(this.title1Font) / 2;
+      this.foregroundArcColor = this.timerType === 'Off' ? 'green' : 'blue';
+    }
+
     this.gaugeArcOuterRadius = this.height < this.width ? (this.height / 2) - 5 : (this.width / 2) - 5;
     this.gaugeArcInnerRadius = this.gaugeArcOuterRadius - this.gaugeArcThickness;
     this.cx = this.width / 2;
@@ -88,12 +96,6 @@ class Gauge {
     this.angleScale = d3.scaleLinear()
       .domain([this.minVal, this.maxVal])
       .range([this.startAngle, this.endAngle]);
-    // func returns which color arc fill should be based on curr val, efficiency thresholds, and selected arc colors for up to baseline, up to target, & nominal vals
-		this.colorScale = currentValue => {
-			if (currentValue >= this.minVal * 0.66) return '#cc3300';
-			if (currentValue >= this.minVal * 0.33) return '#ffcc00';
-			return '#00cc66';
-    };
     // Arc Generators return d values for paths
     this.gaugeArcGenerator = d3.arc()
       .startAngle(this.startAngle)
@@ -113,7 +115,7 @@ class Gauge {
   redrawWithNewArgs(newArgsObj) {
     const that = this;
     resetElements(that.element, '*');
-    that.previousGaugeVal = that.gaugeVal;
+    that.previoustimeLeft = that.timeLeft;
     let count = 0;
     for (let param in newArgsObj) {
       if (newArgsObj.hasOwnProperty(param)) {
@@ -121,9 +123,9 @@ class Gauge {
         count++;
       }
     }
-    // if more than one property has changed (thus properties other than gaugeVal have changed), don't use previous value
+    // if more than one property has changed (thus properties other than timeLeft have changed), don't start at previous value
     if (count > 1) {
-      that.previousGaugeVal = that.gaugeVal
+      that.previoustimeLeft = that.timeLeft
     }
     that.calculateCalculatedProps();
     that.create();
