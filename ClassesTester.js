@@ -296,6 +296,6 @@ function defineFuncForTabSpacing () {
 
 
 
-initialize();
+  initialize();
 }
 defineFuncForTabSpacing();

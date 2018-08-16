@@ -1,7 +1,7 @@
 
 class Gauge {
 	constructor(elementToAppendGaugeTo, timerType = 'On', onReason = 'Temperature', preset = 15, timeLeft = 15, height = 125, width = 125) {
-    this.timerType = timerType // On, Off, or COS
+    this.timerType = timerType // On, Off, COS, or Standby
     this.onReason = onReason // Efficiency, Temperature, or Flow
     this.height = height;
     this.width = width;
@@ -13,8 +13,8 @@ class Gauge {
     this.startAngle = -Math.PI;
     this.endAngle = Math.PI;
     this.gaugeArcThickness = 15;
-    this.title1Font = 'bold 12.0pt Nirmala UI';
-    this.title2Font = '10.0pt Nirmala UI';
+    this.title1Font = 'bold 13.0pt Nirmala UI';	// Niagara: 18
+    this.title2Font = '10.0pt Nirmala UI';	// Niagara: 14
     this.minVal = 0; //secondsCountingFrom if timer
     this.maxVal = preset;
     this.calculateCalculatedProps();
@@ -47,21 +47,31 @@ class Gauge {
         .attrTween('d', this.arcTween(this.angleScale(this.timeLeft)));
 
     //title1
-    chartGroup.append("text")
-      .attr('dominant-baseline', 'text-after-edge')
-      .style("text-anchor", "middle")
-      .attr('y', this.title1Y)
-      .style('font', this.title1Font)
-      .text(this.title1);
+    if (this.timerType === 'Standby') {
+      chartGroup.append('line')
+        .attr('x1', -10)
+        .attr('x2', 10)
+        .attr('y1', this.title1Y - 10)
+        .attr('y2', this.title1Y - 10)
+        .attr('stroke', 'black')
 
-    if (this.timerType === 'On') {
+    } else {
+      chartGroup.append("text")
+        .attr('dominant-baseline', 'text-after-edge')
+        .style("text-anchor", "middle")
+        .attr('y', this.title1Y)
+        .style('font', this.title1Font)
+        .text(this.title1);
+    }
+
+    if (this.timerType === 'On' || this.timerType === 'Standby') {
       //title2
       chartGroup.append("text")
         .attr('dominant-baseline', 'text-after-edge')
         .style("text-anchor", "middle")
         .attr('y', this.title2Y)
         .style('font', this.title2Font)
-        .text(this.timeLeft === 0 ? '' : this.onReason);
+        .text(this.timerType === 'Standby' ? 'Standby' : this.timeLeft === 0 ? '' : this.onReason);
     }
 
 
@@ -74,13 +84,13 @@ class Gauge {
 
   calculateCalculatedProps() {
     this.title1 = this.timeLeft === 0 ? '' : this.timeLeft <= 10 ? this.timeLeft + ' sec' : this.timerType;
-    if (this.timerType === 'On') {
+    if (this.timerType === 'On' || this.timerType === 'Standby') {
       this.title1Y = -(this.verticalPadding / 2);
       this.title2Y = (this.verticalPadding / 2) + getTextHeight(this.title2Font);
-      this.foregroundArcColor = 'orange';
+      this.foregroundArcColor = '#feb550';
     } else {
       this.title1Y = getTextHeight(this.title1Font) / 2;
-      this.foregroundArcColor = this.timerType === 'Off' ? 'green' : 'blue';
+      this.foregroundArcColor = this.timerType === 'Off' ? '#425867' : this.timerType === 'COS' ? '#404040' : 'none';
     }
 
     this.gaugeArcOuterRadius = this.height < this.width ? (this.height / 2) - 5 : (this.width / 2) - 5;

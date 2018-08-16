@@ -1,6 +1,6 @@
 
 class Meter {
-	constructor(elementToAppendMeterTo, elementToAppendTooltipTo, backgroundColor, foregroundBarColor, height, width, title, units, precision, titleFont, unitsFont, numFont, meterVal, minVal, maxVal, designVal) {
+	constructor(elementToAppendMeterTo, elementToAppendTooltipTo, backgroundColor, foregroundBarColor, height, width, title, units, precision, titleFont, unitsFont, numFont, meterVal, minVal, maxVal, hasTooltip, designVal) {
 		this.backgroundColor = backgroundColor;
 		this.foregroundBarColor = foregroundBarColor;
 		this.height = height;
@@ -16,25 +16,36 @@ class Meter {
 		this.maxVal = maxVal;
     this.designVal = designVal;
     this.margin = 3;
-		this.horizontalTextPadding = 5;
+		this.horizontalTextPadding = 3;
 		this.verticalTextPadding = 2;
 		this.backgroundBarColor = '#e0ebeb';
     this.textColor = 'black';
     this.previousMeterVal = this.meterVal;
-    this.calculateCalculatedProps();
-    this.tooltip = new MeterTooltip(this, elementToAppendTooltipTo);
+		this.calculateCalculatedProps();
+		this.hasTooltip = hasTooltip;
+		if (hasTooltip) this.tooltip = new MeterTooltip(this, elementToAppendTooltipTo);
     this.element = elementToAppendMeterTo.append('g')
       .attr('class', 'meterElement')
       .attr('transform', `translate(${this.margin}, ${this.margin})`);
 	}
 
-	create(areNewArgs) {
-    const myTooltip = this.tooltip;
-    myTooltip.create(areNewArgs);
+  calculateCalculatedProps() {
+    this.heights = {title: getTextHeight(this.titleFont), units: getTextHeight(this.unitsFont), num: getTextHeight(this.numFont)};
+    this.isDesignVal = this.designVal || this.designVal === 0 ? true : false;
+		this.greatestTextHeight = d3.max([getTextHeight(this.titleFont), getTextHeight(this.unitsFont), getTextHeight(this.numFont)]);
+    this.greatestNumWidth = d3.max([getTextWidth(formatValueToPrecision(this.minVal, this.precision), this.numFont), getTextWidth(formatValueToPrecision(this.maxVal, this.precision), this.numFont), this.isDesignVal ? getTextWidth(formatValueToPrecision(this.designVal, this.precision), this.numFont) : 0]);
+    this.barLength = this.width - (this.margin * 2);
+    this.barHeight = this.height - ( (this.margin * 2) + this.greatestTextHeight + this.verticalTextPadding );
+  }
 
-    this.element
-      .on('mouseover', () => myTooltip.show())
-      .on('mouseout', () => myTooltip.hide());
+	create(areNewArgs) {
+		if(this.hasTooltip) {
+			const myTooltip = this.tooltip;
+			myTooltip.create(areNewArgs);
+			this.element
+				.on('mouseover', () => myTooltip.show())
+				.on('mouseout', () => myTooltip.hide());
+		}
 
 		const barGroup = this.element.append('g')
 			.attr('class', 'barGroup')
@@ -127,19 +138,17 @@ class Meter {
     this.element.remove();
   }
 
-  calculateCalculatedProps() {
-    this.heights = {title: getTextHeight(this.titleFont), units: getTextHeight(this.unitsFont), num: getTextHeight(this.numFont)};
-    this.isDesignVal = this.designVal || this.designVal === 0 ? true : false;
-		this.greatestTextHeight = d3.max([getTextHeight(this.titleFont), getTextHeight(this.unitsFont), getTextHeight(this.numFont)]);
-    this.greatestNumWidth = d3.max([getTextWidth(formatValueToPrecision(this.minVal, this.precision), this.numFont), getTextWidth(formatValueToPrecision(this.maxVal, this.precision), this.numFont), this.isDesignVal ? getTextWidth(formatValueToPrecision(this.designVal, this.precision), this.numFont) : 0]);
-    this.barLength = this.width - (this.margin * 2);
-    this.barHeight = this.height - ( (this.margin * 2) + this.greatestTextHeight + this.verticalTextPadding );
-  }
+
+	static getHeightFromMeterHeight(meterHeight, titleFont, unitsFont, numFont) {
+		return meterHeight + d3.max([getTextHeight(titleFont), getTextHeight(unitsFont), getTextHeight(numFont)]) + 6 + 2;
+	}
 
   //  {paramName: newArg, paramName: newArg, paramName: newArg}
   redrawWithNewArgs(newArgsObj) {
-    const that = this;
-    resetElements(that.tooltip.element, '*');
+		const that = this;
+		if (this.hasTooltip) {
+			resetElements(that.tooltip.element, '*');
+		}
     resetElements(that.element, '*');
     that.previousMeterVal = that.meterVal;
     let count = 0;
