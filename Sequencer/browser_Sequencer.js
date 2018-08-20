@@ -199,16 +199,7 @@ function defineFuncForTabSpacing () {
 		const meterWidth = data.graphicWidth * 0.85
 		const meterHeight = 15;
 		const meterObjHeight = Meter.getHeightFromMeterHeight(meterHeight, meterTitleFont, meterUnitsFont, meterNumFont);
-		/** TOOLTIP */
-		const tooltipMargin = 3;
-		const minRightOfLabel = 8;
-		const verticalPadding = 3;
-		const tooltipHeight = (tooltipMargin * 3) + ( getTextHeight(meter.titleFont) * 2 ) + verticalPadding;
-		const tooltipWidth = (tooltipMargin * 2) + getTextWidth('Opt Hrs:', meter.titleFont) + minRightOfLabel + meter.greatestNumWidth;
-		const meterLeftTextWidth = getTextWidth(data.percentOptHrs, meterNumFont) + meter.horizontalTextPadding;
-		const meterRightTextWidth = getTextWidth(meter.title, meterTitleFont);
-		const sumWidthsOnBar = tooltipWidth + meterLeftTextWidth + meterRightTextWidth;
-		const leftoverSpaceOnBar = meter.barLength - sumWidthsOnBar;
+
 
 
 
@@ -348,6 +339,15 @@ function defineFuncForTabSpacing () {
 
 
 		/*** TOOLTIP ***/
+		const tooltipMargin = 3;
+		const minRightOfLabel = 8;
+		const verticalPadding = 3;
+		const tooltipHeight = (tooltipMargin * 3) + ( getTextHeight(meter.titleFont) * 2 ) + verticalPadding;
+		const tooltipWidth = (tooltipMargin * 2) + getTextWidth('Opt Hrs:', meter.titleFont) + minRightOfLabel + meter.greatestNumWidth;
+		const meterLeftTextWidth = getTextWidth(data.percentOptHrs, meterNumFont) + meter.horizontalTextPadding;
+		const meterRightTextWidth = getTextWidth(meter.title, meterTitleFont);
+		const sumWidthsOnBar = tooltipWidth + meterLeftTextWidth + meterRightTextWidth;
+		const leftoverSpaceOnBar = meter.barLength - sumWidthsOnBar;
 		const tooltipGroup = meterGroup.append('g').attr('class', 'meterGroup').attr('transform', `translate(${meterLeftTextWidth + (leftoverSpaceOnBar / 2)}, ${(meter.margin + meter.greatestTextHeight) - tooltipHeight})`).style('display', 'none');
 
 

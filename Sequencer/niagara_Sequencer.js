@@ -1,4 +1,4 @@
-define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3.min', 'baja!'], function (Widget, subscriberMixIn, d3, baja) {
+define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3.min', 'baja!', 'nmodule/COREx/rc/jsClasses/Meter', 'nmodule/COREx/rc/jsClasses/Gauge'], function (Widget, subscriberMixIn, d3, baja, Meter, Gauge) {
 	'use strict';
 
 ////////// Hard Coded Defs //////////
@@ -32,30 +32,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 	const arePrimitiveValsInObjsSame = (obj1, obj2) => !Object.keys(obj1).filter(removeTimerProps).some(key => (obj1[key] === null || (typeof obj1[key] !== 'object' && typeof obj1[key] !== 'function')) && obj1[key] !== obj2[key])
 	// 0 layers means obj only has primitive values
 	// this func only works with obj literals layered with obj literals until base layer only primitive
-	const checkNestedObjectsEquivalence = (objA, objB, layers) => {
-		if (layers === 0) {
-			return arePrimitiveValsInObjsSame(objA, objB);
-		} else {
-			const objAKeys = Object.keys(objA);
-			const objBKeys = Object.keys(objB);
-			if (objAKeys.length !== objBKeys.length) return false;
-			const somethingIsNotEquivalent = objAKeys.some(key => {
-				return !checkNestedObjectsEquivalence(objA[key], objB[key], layers - 1);
-			})
-			return !somethingIsNotEquivalent;
-		}
-	};
 	const needToRedrawWidget = (widget, newData) => {
 		const lastData = widget.data;
 		// check primitives for equivalence
 		if (!arePrimitiveValsInObjsSame(lastData, newData)) return true;
-		// // check nested objs for equivalence
-		// const monthlyModulesAreSame = checkNestedObjectsEquivalence(lastData.monthlyModulesData, newData.monthlyModulesData, 3);
-		// const monthlyOverallAreSame = checkNestedObjectsEquivalence(lastData.monthlyOverallData, newData.monthlyOverallData, 2);
-		// const annualModulesAreSame = checkNestedObjectsEquivalence(lastData.annualModulesData, newData.annualModulesData, 2);
-		// const annualOverallAreSame = checkNestedObjectsEquivalence(lastData.annualOverallData, newData.annualOverallData, 1);
-		// if (!monthlyModulesAreSame || !monthlyOverallAreSame || !annualModulesAreSame || !annualOverallAreSame) return true;
-
 		//return false if nothing prompted true
 		return false;
 	};
@@ -183,9 +163,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 	const renderWidget = (widget, data) => {
 		//variables
 		const textColor = 'black';
-		const titlesFont = 'bold 13.0pt Nirmala UI';	// Niagara: 18
-		const valuesFont = 'bold 15.0pt Nirmala UI';	// Niagara: 28
-		const labelsFont = '13.0pt Nirmala UI';	// Niagara: 16
+		const titlesFont = 'bold 13.0pt Nirmala UI';	// Niagara: 18	Browser: 13
+		const valuesFont = 'bold 15.0pt Nirmala UI';	// Niagara: 28	Browser: 15
+		const labelsFont = '13.0pt Nirmala UI';	// Niagara: 16	Browser: 13
 		const enabledCircleColor = '#22b573';
 		const disabledCircleColor = 'gray'
 		const backgroundColor = 'white'
@@ -216,16 +196,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		const meterWidth = data.graphicWidth * 0.85
 		const meterHeight = 15;
 		const meterObjHeight = Meter.getHeightFromMeterHeight(meterHeight, meterTitleFont, meterUnitsFont, meterNumFont);
-		/** TOOLTIP */
-		const tooltipMargin = 3;
-		const minRightOfLabel = 8;
-		const verticalPadding = 3;
-		const tooltipHeight = (tooltipMargin * 3) + ( getTextHeight(meter.titleFont) * 2 ) + verticalPadding;
-		const tooltipWidth = (tooltipMargin * 2) + getTextWidth('Opt Hrs:', meter.titleFont) + minRightOfLabel + meter.greatestNumWidth;
-		const meterLeftTextWidth = getTextWidth(data.percentOptHrs, meterNumFont) + meter.horizontalTextPadding;
-		const meterRightTextWidth = getTextWidth(meter.title, meterTitleFont);
-		const sumWidthsOnBar = tooltipWidth + meterLeftTextWidth + meterRightTextWidth;
-		const leftoverSpaceOnBar = meter.barLength - sumWidthsOnBar;
+
 
 
 		// ********************************************* DRAW ******************************************************* //
@@ -347,6 +318,16 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 
 		/*** TOOLTIP ***/
+		const tooltipMargin = 3;
+		const minRightOfLabel = 8;
+		const verticalPadding = 3;
+		const greatestNumWidth = d3.max([getTextWidth(data.chillersOptHrs, meterNumFont), getTextWidth(data.chillersStdHrs, meterNumFont)])
+		const tooltipHeight = (tooltipMargin * 3) + ( getTextHeight(meter.titleFont) * 2 ) + verticalPadding;
+		const tooltipWidth = (tooltipMargin * 2) + getTextWidth('Opt Hrs:', meter.titleFont) + minRightOfLabel + greatestNumWidth;
+		const meterLeftTextWidth = getTextWidth(data.percentOptHrs, meterNumFont) + meter.horizontalTextPadding;
+		const meterRightTextWidth = getTextWidth(meter.title, meterTitleFont);
+		const sumWidthsOnBar = tooltipWidth + meterLeftTextWidth + meterRightTextWidth;
+		const leftoverSpaceOnBar = meter.barLength - sumWidthsOnBar;
 		const tooltipGroup = meterGroup.append('g').attr('class', 'meterGroup').attr('transform', `translate(${meterLeftTextWidth + (leftoverSpaceOnBar / 2)}, ${(meter.margin + meter.greatestTextHeight) - tooltipHeight})`).style('display', 'none');
 
 
@@ -416,9 +397,19 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		// invoking setupDefinitions, then returning value from successful promise to renderWidget func
 		return setupDefinitions(widget)
 			.then(data => {
+				if (widget.data) {
+					const newArgsObj = {};
+					let timerChanged = false;
+					timerData.forEach(prop => {
+						if (widget.data[prop] !== data[prop]) {
+							newArgsObj[prop] = data[prop];
+							timerChanged = true;
+						}
+					});
+					if (timerChanged) widget.timer.redrawWithNewArgs(newArgsObj);
+				}
 				if (force || !widget.data || needToRedrawWidget(widget, data)){
-					
-					renderWidget(widget, data);	
+					renderWidget(widget, data);
 				}
 				widget.data = data;
 			})

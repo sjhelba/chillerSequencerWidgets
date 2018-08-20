@@ -39,7 +39,7 @@ class Meter {
   }
 
 	create(areNewArgs) {
-		if(this.hasTooltip) {
+		if (this.hasTooltip) {
 			const myTooltip = this.tooltip;
 			myTooltip.create(areNewArgs);
 			this.element
