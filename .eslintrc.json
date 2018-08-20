@@ -15,9 +15,6 @@
           },
           "sourceType": "module"
       },
-    "plugins": [
-          "react"
-      ],
 
     "globals": {
         "d3": true,

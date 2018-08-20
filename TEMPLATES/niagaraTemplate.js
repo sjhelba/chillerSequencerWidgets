@@ -1,5 +1,5 @@
 define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3.min'], function (Widget, subscriberMixIn, d3) {
-	"use strict";
+	'use strict';
 
 ////////// Hard Coded Defs //////////
 
@@ -199,7 +199,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 	MyWidget.prototype.doInitialize = function (element) {
 		var that = this;
-		element.addClass("MyWidgetOuter");
+		element.addClass('MyWidgetOuter');
 		const outerEl = d3.select(element[0])
 			.style('overflow', 'hidden')
 
@@ -208,10 +208,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.style('overflow', 'hidden')
 			.attr('top', 0)
 			.attr('left', 0)
-			.attr('width', "100%")
-			.attr('height', "100%");
+			.attr('width', '100%')
+			.attr('height', '100%');
 
-		that.getSubscriber().attach("changed", function (prop, cx) { render(that) });
+		that.getSubscriber().attach('changed', function (prop, cx) { render(that) });
 	};
 
 
@@ -223,13 +223,13 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 	/* FOR FUTURE NOTE: 
 	MyWidget.prototype.doChanged = function (name, value) {
-		  if(name === "value") valueChanged += 'prototypeMethod - ';
+		  if(name === 'value') valueChanged += 'prototypeMethod - ';
 		  render(this);
 	};
 	*/
 
 	MyWidget.prototype.doDestroy = function () {
-		this.jq().removeClass("MyWidgetOuter");
+		this.jq().removeClass('MyWidgetOuter');
 	};
 
 	return MyWidget;
