@@ -321,7 +321,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		const tooltipMargin = 3;
 		const minRightOfLabel = 8;
 		const verticalPadding = 3;
-		const greatestNumWidth = d3.max([getTextWidth(data.chillersOptHrs, meterNumFont), getTextWidth(data.chillersStdHrs, meterNumFont)])
+		const greatestNumWidth = d3.max([getTextWidth(formatValueToPrecision(data.chillersOptHrs, 0), meterNumFont), getTextWidth(formatValueToPrecision(data.chillersStdHrs, 0), meterNumFont)])
 		const tooltipHeight = (tooltipMargin * 3) + ( getTextHeight(meter.titleFont) * 2 ) + verticalPadding;
 		const tooltipWidth = (tooltipMargin * 2) + getTextWidth('Opt Hrs:', meter.titleFont) + minRightOfLabel + greatestNumWidth;
 		const meterLeftTextWidth = getTextWidth(data.percentOptHrs, meterNumFont) + meter.horizontalTextPadding;
