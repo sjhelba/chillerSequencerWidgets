@@ -165,42 +165,50 @@ function defineFuncForTabSpacing () {
 	////////////////////////////////////////////////////////////////
 
 	const renderWidget = (widget, data) => {
-// Extra Definitions //
-	//props can make exposed or not
-	const textColor = 'black';
-	const titlesFont = 'bold 13.0pt Nirmala UI';	// Niagara: 18
-	const valuesFont = 'bold 15.0pt Nirmala UI';	// Niagara: 28
-	const labelsFont = '13.0pt Nirmala UI';	// Niagara: 16
-	const meterTitleFont = '10.0pt Nirmala UI';
-	const meterUnitsFont = 'bold 10.0pt Nirmala UI';
-	const meterNumFont = 'bold 10.0pt Nirmala UI';
-	const enabledCircleColor = '#22b573';
-	const disabledCircleColor = 'gray'
-	const backgroundColor = 'white'
+		// Extra Definitions //
+		const textColor = 'black';
+		const titlesFont = 'bold 13.0pt Nirmala UI';	// Niagara: 18
+		const valuesFont = 'bold 15.0pt Nirmala UI';	// Niagara: 28
+		const labelsFont = '13.0pt Nirmala UI';	// Niagara: 16
+		const enabledCircleColor = '#22b573';
+		const disabledCircleColor = 'gray'
+		const backgroundColor = 'white'
 
-
-	//not exposed props
-	const titlesHeight = getTextHeight(titlesFont);
-	const valuesHeight = getTextHeight(valuesFont);
-	const labelsHeight = getTextHeight(labelsFont);
-	const optimizationWidth = getTextWidth('Optimization', labelsFont);
-	const specifiedLeadWidth = getTextWidth('Specified Lead', labelsFont);
-	const availableWidth = getTextWidth('Available', labelsFont);
-	const runningWidth = getTextWidth('Running', labelsFont);
-	const meterWidth = data.graphicWidth * 0.85
-	const meterHeight = 15;
-	const paddingUnderTitle = 15;
-	const paddingUnderValues = 0;
-	const paddingBetweenSections = 20;
-	const paddingBetweenRows = 10;
-	const circleDiameter = 15;
-	const circleRadius = circleDiameter / 2;
-	const paddingRightOfCircle = 3;
-	const paddingBetweenTopColumns = 30;
-	const additionalMarginsForNonTitles = (data.graphicWidth - (optimizationWidth + specifiedLeadWidth + circleDiameter + paddingRightOfCircle + paddingBetweenTopColumns)) / 2;
-	const paddingBetweenBottomColumns = 8;
-	const paddingRightOfGauge = data.graphicWidth - (additionalMarginsForNonTitles + 150 /* gaugeWidth */ + availableWidth + paddingBetweenBottomColumns + runningWidth);
-		
+		const titlesHeight = getTextHeight(titlesFont);
+		const valuesHeight = getTextHeight(valuesFont);
+		const labelsHeight = getTextHeight(labelsFont);
+		const optimizationWidth = getTextWidth('Optimization', labelsFont);
+		const specifiedLeadWidth = getTextWidth('Specified Lead', labelsFont);
+		const availableWidth = getTextWidth('Available', labelsFont);
+		const runningWidth = getTextWidth('Running', labelsFont);
+		const paddingUnderTitle = 15;
+		const paddingUnderValues = 0;
+		const paddingBetweenSections = 20;
+		const paddingBetweenRows = 10;
+		const circleDiameter = 15;
+		const circleRadius = circleDiameter / 2;
+		const paddingRightOfCircle = 3;
+		const paddingBetweenTopColumns = 30;
+		const paddingBetweenBottomColumns = 8;
+		const additionalMarginsForNonTitles = (data.graphicWidth - (optimizationWidth + specifiedLeadWidth + circleDiameter + paddingRightOfCircle + paddingBetweenTopColumns)) / 2;
+		const paddingRightOfGauge = data.graphicWidth - (additionalMarginsForNonTitles + 150 /* gaugeWidth */ + availableWidth + paddingBetweenBottomColumns + runningWidth);
+		/** METER */
+		const meterTitleFont = '10.0pt Nirmala UI';
+		const meterUnitsFont = 'bold 10.0pt Nirmala UI';
+		const meterNumFont = 'bold 10.0pt Nirmala UI';
+		const meterWidth = data.graphicWidth * 0.85
+		const meterHeight = 15;
+		const meterObjHeight = Meter.getHeightFromMeterHeight(meterHeight, meterTitleFont, meterUnitsFont, meterNumFont);
+		/** TOOLTIP */
+		const tooltipMargin = 3;
+		const minRightOfLabel = 8;
+		const verticalPadding = 3;
+		const tooltipHeight = (tooltipMargin * 3) + ( getTextHeight(meter.titleFont) * 2 ) + verticalPadding;
+		const tooltipWidth = (tooltipMargin * 2) + getTextWidth('Opt Hrs:', meter.titleFont) + minRightOfLabel + meter.greatestNumWidth;
+		const meterLeftTextWidth = getTextWidth(data.percentOptHrs, meterNumFont) + meter.horizontalTextPadding;
+		const meterRightTextWidth = getTextWidth(meter.title, meterTitleFont);
+		const sumWidthsOnBar = tooltipWidth + meterLeftTextWidth + meterRightTextWidth;
+		const leftoverSpaceOnBar = meter.barLength - sumWidthsOnBar;
 
 
 
@@ -319,7 +327,6 @@ function defineFuncForTabSpacing () {
 			.attr('y', ((paddingUnderValues + labelsHeight) * 2) + paddingBetweenRows + valuesHeight)
 
 
-		const meterObjHeight = Meter.getHeightFromMeterHeight(meterHeight, meterTitleFont, meterUnitsFont, meterNumFont);
 		const meterGroup = graphicGroup.append('g').attr('class', 'meterGroup').attr('transform', `translate(${(data.graphicWidth / 2) - (meterWidth / 2)},${data.graphicHeight - meterObjHeight})`)
 		const meter = new Meter(
 			meterGroup,
@@ -341,15 +348,6 @@ function defineFuncForTabSpacing () {
 
 
 		/*** TOOLTIP ***/
-		const tooltipMargin = 3;
-		const minRightOfLabel = 8;
-		const verticalPadding = 3;
-		const tooltipHeight = (tooltipMargin * 3) + ( getTextHeight(meter.titleFont) * 2 ) + verticalPadding;
-		const tooltipWidth = (tooltipMargin * 2) + getTextWidth('Opt Hrs:', meter.titleFont) + minRightOfLabel + meter.greatestNumWidth;
-		const meterLeftTextWidth = getTextWidth(data.percentOptHrs, meterNumFont) + meter.horizontalTextPadding;
-		const meterRightTextWidth = getTextWidth(meter.title, meterTitleFont);
-		const sumWidthsOnBar = tooltipWidth + meterLeftTextWidth + meterRightTextWidth;
-		const leftoverSpaceOnBar = meter.barLength - sumWidthsOnBar;
 		const tooltipGroup = meterGroup.append('g').attr('class', 'meterGroup').attr('transform', `translate(${meterLeftTextWidth + (leftoverSpaceOnBar / 2)}, ${(meter.margin + meter.greatestTextHeight) - tooltipHeight})`).style('display', 'none');
 
 
@@ -393,8 +391,8 @@ function defineFuncForTabSpacing () {
 			.attr('x', labelsColumnX);
 		//Max Val
 		row2.append('text')
-		.text(formatValueToPrecision(data.chillersStdHrs, 0))
-		.style('font', meter.numFont)
+			.text(formatValueToPrecision(data.chillersStdHrs, 0))
+			.style('font', meter.numFont)
 			.attr('x', numsColumnX);
 
 

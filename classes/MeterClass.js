@@ -6,7 +6,7 @@ class Meter {
 		this.height = height;
 		this.width = width;
 		this.title = title;
-		this.units = units,
+		this.units = units;
 		this.precision = precision;
     this.titleFont = titleFont;
     this.unitsFont = unitsFont;
