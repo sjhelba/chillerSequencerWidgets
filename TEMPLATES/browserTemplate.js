@@ -1,29 +1,8 @@
+/* global sjo */
+
 function defineFuncForTabSpacing () {
 
 	////////// Hard Coded Defs //////////
-	const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
-	const formatIntoPercentage = d3.format('.0%');
-	const getTextWidth = (text, font) => {
-		const canvas = document.createElement('canvas');
-		const context = canvas.getContext('2d');
-		context.font = font;
-		const width = context.measureText(text).width;
-		d3.select(canvas).remove()
-		return width;
-	};
-	const getTextHeight = font => {
-		let num = '';
-		const indexOfLastDigit = font.indexOf('pt') - 1;
-		for(let i = 0; i <= indexOfLastDigit; i++){
-			if(!isNaN(font[i]) || font[i] === '.') num += font[i];
-		}
-		num = +num;
-		return num * 1.33333333333;
-	};
-	const resetElements = (outerWidgetEl, elementsToReset) => {
-		const selectionForCheck = outerWidgetEl.selectAll(elementsToReset)
-		if (!selectionForCheck.empty()) selectionForCheck.remove();
-	};
 	const arePrimitiveValsInObjsSame = (obj1, obj2) => !Object.keys(obj1).some(key => (obj1[key] === null || (typeof obj1[key] !== 'object' && typeof obj1[key] !== 'function')) && obj1[key] !== obj2[key])
 	// 0 layers means obj only has primitive values
 	// this func only works with obj literals layered with obj literals until base layer only primitive
@@ -176,7 +155,7 @@ function defineFuncForTabSpacing () {
 		d3.select(widget.svg.node().parentNode).style('background-color', data.backgroundColor);
 		
 		// delete leftover elements from versions previously rendered
-		if (!widget.svg.empty()) resetElements(widget.svg, '*');
+		if (!widget.svg.empty()) sjo.resetElements(widget.svg, '*');
 
 		// ********************************************* GRAPHIC GROUP ******************************************************* //
 

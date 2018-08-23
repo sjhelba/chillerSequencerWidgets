@@ -1,5 +1,4 @@
 /* global sjo */
-
 define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3.min'], function (Widget, subscriberMixIn, d3) {
 	'use strict';
 
@@ -98,8 +97,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		const jq = widget.jq();
 
 		//SIZING
-		data.jqHeight = jq.height() || 400;
-		data.jqWidth = jq.width() || 350;
+		data.jqHeight = jq.height() || 340;
+		data.jqWidth = jq.width() || 785;
 		data.graphicHeight = data.jqHeight - (margin.top + margin.bottom);
 		data.graphicWidth = data.jqWidth - (margin.left + margin.right);
 

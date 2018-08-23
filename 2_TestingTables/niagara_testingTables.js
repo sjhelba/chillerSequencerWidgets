@@ -1,5 +1,5 @@
 define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3.min'], function (Widget, subscriberMixIn, d3) {
-	"use strict";
+	'use strict';
 
 ////////// Hard Coded Defs //////////
 
@@ -63,7 +63,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 	// Define Widget Constructor & Exposed Properties
 ////////////////////////////////////////////////////////////////
 
-	var ChillerEquipmentReport = function () {
+	var MyWidget = function () {
 		var that = this;
 		Widget.apply(this, arguments);
 
@@ -102,8 +102,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		subscriberMixIn(that);
 	};
 
-	ChillerEquipmentReport.prototype = Object.create(Widget.prototype);
-	ChillerEquipmentReport.prototype.constructor = ChillerEquipmentReport;
+	MyWidget.prototype = Object.create(Widget.prototype);
+	MyWidget.prototype.constructor = MyWidget;
 
 
 
@@ -120,8 +120,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		const jq = widget.jq();
 
 		//SIZING
-		data.jqHeight = jq.height();
-		data.jqWidth = jq.width();
+		data.jqHeight = jq.height() || 400;
+		data.jqWidth = jq.width() || 350;
 		data.graphicHeight = data.jqHeight - (margin.top + margin.bottom);
 		data.graphicWidth = data.jqWidth - (margin.left + margin.right);
 
@@ -197,21 +197,21 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 	// Initialize Widget
 ////////////////////////////////////////////////////////////////
 
-	ChillerEquipmentReport.prototype.doInitialize = function (element) {
+	MyWidget.prototype.doInitialize = function (element) {
 		var that = this;
-		element.addClass("ChillerEquipmentReportOuter");
+		element.addClass('MyWidgetOuter');
 		const outerEl = d3.select(element[0])
 			.style('overflow', 'hidden')
 
 		that.svg = outerEl.append('svg')
-			.attr('class', 'ChillerEquipmentReport')
+			.attr('class', 'MyWidget')
 			.style('overflow', 'hidden')
 			.attr('top', 0)
 			.attr('left', 0)
-			.attr('width', "100%")
-			.attr('height', "100%");
+			.attr('width', '100%')
+			.attr('height', '100%');
 
-		that.getSubscriber().attach("changed", function (prop, cx) { render(that) });
+		that.getSubscriber().attach('changed', function (prop, cx) { render(that) });
 	};
 
 
@@ -219,19 +219,19 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 	// Extra Widget Methods
 ////////////////////////////////////////////////////////////////
 
-	ChillerEquipmentReport.prototype.doLayout = ChillerEquipmentReport.prototype.doChanged = ChillerEquipmentReport.prototype.doLoad = function () { render(this); };
+	MyWidget.prototype.doLayout = MyWidget.prototype.doChanged = MyWidget.prototype.doLoad = function () { render(this); };
 
 	/* FOR FUTURE NOTE: 
-	ChillerEquipmentReport.prototype.doChanged = function (name, value) {
-		  if(name === "value") valueChanged += 'prototypeMethod - ';
+	MyWidget.prototype.doChanged = function (name, value) {
+		  if(name === 'value') valueChanged += 'prototypeMethod - ';
 		  render(this);
 	};
 	*/
 
-	ChillerEquipmentReport.prototype.doDestroy = function () {
-		this.jq().removeClass("ChillerEquipmentReportOuter");
+	MyWidget.prototype.doDestroy = function () {
+		this.jq().removeClass('MyWidgetOuter');
 	};
 
-	return ChillerEquipmentReport;
+	return MyWidget;
 });
 

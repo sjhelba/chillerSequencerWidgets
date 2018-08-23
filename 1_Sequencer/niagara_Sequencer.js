@@ -3,7 +3,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 ////////// Hard Coded Defs //////////
 	const timerData = ['timerType', 'timerOnReason', 'timerPreset', 'timerTimeLeft']
-	const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
 	const formatIntoPercentage = d3.format('.0%');
 	const formatValueToPrecision = (value, precision) => d3.format(',.' + precision + 'f')(value);
 	const getTextWidth = (text, font) => {
@@ -17,8 +16,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 	const getTextHeight = font => {
 		let num = '';
 		const indexOfLastDigit = font.indexOf('pt') - 1;
-		for(let i = 0; i <= indexOfLastDigit; i++){
-			if(!isNaN(font[i]) || font[i] === '.') num += font[i];
+		for (let i = 0; i <= indexOfLastDigit; i++){
+			if (!isNaN(font[i]) || font[i] === '.') num += font[i];
 		}
 		num = +num;
 		return num * 1.33333333333;
