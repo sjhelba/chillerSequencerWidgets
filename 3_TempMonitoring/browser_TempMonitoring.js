@@ -3,32 +3,21 @@ function defineFuncForTabSpacing () {
 
 	////////// Hard Coded Defs //////////
 	const arePrimitiveValsInObjsSame = (obj1, obj2) => !Object.keys(obj1).some(key => (obj1[key] === null || (typeof obj1[key] !== 'object' && typeof obj1[key] !== 'function')) && obj1[key] !== obj2[key])
-	// 0 layers means obj only has primitive values
-	// this func only works with obj literals layered with obj literals until base layer only primitive
-	const checkNestedObjectsEquivalence = (objA, objB, layers) => {
-		if (layers === 0) {
-			return arePrimitiveValsInObjsSame(objA, objB);
-		} else {
-			const objAKeys = Object.keys(objA);
-			const objBKeys = Object.keys(objB);
-			if (objAKeys.length !== objBKeys.length) return false;
-			const somethingIsNotEquivalent = objAKeys.some(key => {
-				return !checkNestedObjectsEquivalence(objA[key], objB[key], layers - 1);
-			})
-			return !somethingIsNotEquivalent;
-		}
+	const isDataNotEquivalent = (lastData, newData, dataName) => {
+		if (lastData[dataName].length !== newData[dataName].length) return true;
+		const somethingIsNotEquivalent = lastData[dataName].some((lastDatum, index) => {
+			const newDatum = newData[dataName][index]
+			if (lastDatum.time.getTime() !== newDatum.time.getTime() || lastDatum.value !== newDatum.value) return true;
+			return false;
+		});
+		return somethingIsNotEquivalent;
 	};
 	const needToRedrawWidget = (widget, newData) => {
 		const lastData = widget.data;
 		// check primitives for equivalence
 		if (!arePrimitiveValsInObjsSame(lastData, newData)) return true;
-		// check nested objs for equivalence
-		const monthlyModulesAreSame = checkNestedObjectsEquivalence(lastData.monthlyModulesData, newData.monthlyModulesData, 3);
-		const monthlyOverallAreSame = checkNestedObjectsEquivalence(lastData.monthlyOverallData, newData.monthlyOverallData, 2);
-		const annualModulesAreSame = checkNestedObjectsEquivalence(lastData.annualModulesData, newData.annualModulesData, 2);
-		const annualOverallAreSame = checkNestedObjectsEquivalence(lastData.annualOverallData, newData.annualOverallData, 1);
-		if (!monthlyModulesAreSame || !monthlyOverallAreSame || !annualModulesAreSame || !annualOverallAreSame) return true;
-
+		// check nested arrays/objs for equivalence
+		if (isDataNotEquivalent(lastData, newData, 'CHWSupplyTrendData') || isDataNotEquivalent(lastData, newData, 'CHWSetpointTrendData') || isDataNotEquivalent(lastData, newData, 'CHWSequenceTrendData') || isDataNotEquivalent(lastData, newData, 'CDWSupplyTrendData') || isDataNotEquivalent(lastData, newData, 'CDWSetpointTrendData')) return true;
 		//return false if nothing prompted true
 		return false;
 	};
@@ -124,6 +113,21 @@ function defineFuncForTabSpacing () {
 		{
 			name: 'overrideUnitsWFacets',
 			value: 'false'
+		},
+		{
+			name: 'backgroundColor',
+			value: 'rgb(245,245,245)',
+			typeSpec: 'gx:Color'
+		},
+		{
+			name: 'tooltipColor',
+			value: 'rgb(255,255,255)',
+			typeSpec: 'gx:Color'
+		},
+		{
+			name: 'textColor',
+			value: 'black',
+			typeSpec: 'gx:Color'
 		}
 	];
 
@@ -146,7 +150,7 @@ function defineFuncForTabSpacing () {
 		if (!widget.waterSupplyTempType) widget.waterSupplyTempType = 'CHW' // CHW or CDW (Chilled Water Supply or Condenser Water Supply)
 		if (!widget.timeView) widget.timeView = 'live' // live or day
 		// Live displays last 10 min in 1 min intervals
-		// 24 Hours displays last 24 hrs in 1 hr intervals
+		// 24 Hours displays last 24 hrs in 1 min intervals
 		if (!widget.MSCHWHidden) widget.MSCHWHidden = false;
 		if (!widget.SPCHWHidden) widget.SPCHWHidden = false;
 		if (!widget.SQCHWHidden) widget.SQCHWHidden = false;
@@ -159,7 +163,6 @@ function defineFuncForTabSpacing () {
 		// DATA TO POPULATE //
 		data.precision = 1;
 		data.units = '°F';
-
 		//CHW Trends
 		data.CHWSupplyTrendData = [];
 		data.CHWSetpointTrendData = [];
@@ -168,11 +171,13 @@ function defineFuncForTabSpacing () {
 		data.CDWSupplyTrendData = [];
 		data.CDWSetpointTrendData = [];
 
+
+
 		// FAKE DATA //
 		const populateFakeData = () => {
 			const batchResolveTrends = ['history:^System_ChwSupply', 'history:^System_ChwSupplySp', 'history:^System_ChwSupplySq', 'history:^System_CdwSupply', 'history:^System_CdwSupplySp'];
 			batchResolveTrends.forEach(trend => {
-				//in Niagara limit cursor collection to 1440, to get minutely data for 24 hrs
+				//in Niagara get minutely data for 24 hrs
 				// create objs with timestamp and value data to look like:
 
 				// {time: new JS date/time, value: 44}
@@ -195,7 +200,6 @@ function defineFuncForTabSpacing () {
 			//CDW Trends
 			fillFakeArray(41, 44.5, data.CDWSupplyTrendData);
 			fillFakeArray(42, 42, data.CDWSetpointTrendData);
-			console.log(data)
 
 		};
 
@@ -227,7 +231,6 @@ function defineFuncForTabSpacing () {
 
 	const renderWidget = (widget, data) => {
 		// ********************************************* Additional Definitions ******************************************************* //
-		// note that measured trends have area underneath with 25% opacity
 		const CHWTrendData = [
 			{ type: 'MS', legendName: 'Measured', liveData: data.CHWSupplyTrendData.slice(1430), dayData: data.CHWSupplyTrendData, color: data.measuredCHWTrendColor },
 			{ type: 'SP', legendName: 'Setpoint', liveData: data.CHWSetpointTrendData.slice(1430), dayData: data.CHWSetpointTrendData, color: data.setpointCHWTrendColor },
@@ -239,7 +242,6 @@ function defineFuncForTabSpacing () {
 		];
 		const CHWLegendCategories = ['measured', 'setpoint', 'sequence'];
 		const CDWLegendCategories = ['measured', 'setpoint'];
-console.log('CHWTrendData', CHWTrendData)
 
 		// SIZES
 			//horizontal
@@ -285,9 +287,6 @@ console.log('CHWTrendData', CHWTrendData)
 	
 
 		// COLORS
-		const textColor = 'black';
-		const backgroundColor = 'rgb(245,245,245)';
-		const tooltipColor = 'rgb(255,255,255)';
 		const unselectedRadioButton = '#C0C0C0';
 		const CHWRadioButtonColor = '#3fa9f5';
 		const CDWRadioButtonColor = '#E4b550';
@@ -408,7 +407,7 @@ console.log('CHWTrendData', CHWTrendData)
 			.attr('height', data.jqHeight + 'px')
 			.attr('width', data.jqWidth + 'px')
 			
-		d3.select(widget.svg.node().parentNode).style('background-color', backgroundColor);
+		d3.select(widget.svg.node().parentNode).style('background-color', data.backgroundColor);
 		
 		// delete leftover elements from versions previously rendered
 		if (!widget.svg.empty()) sjo.resetElements(widget.svg, '*');
@@ -419,13 +418,13 @@ console.log('CHWTrendData', CHWTrendData)
 		graphicGroup.append('rect')
 			.attr('height', graphicHeight)
 			.attr('width', graphicWidth)
-			.attr('fill', backgroundColor)
+			.attr('fill', data.backgroundColor)
 			.on('click', resetPins);
 
 		// ********************************************* HEADER GROUP ******************************************************* //
 		const headerGroup = graphicGroup.append('g').attr('class', 'headerGroup')
 		headerGroup.append('text')
-			.attr('fill', textColor)
+			.attr('fill', data.textColor)
 			.style('font', data.titleFont)
 			.attr('y', titleHeight)
 			.text(widget.waterSupplyTempType === 'CHW' ? 'Chilled Water Supply' : 'Condenser Water Supply')
@@ -448,14 +447,14 @@ console.log('CHWTrendData', CHWTrendData)
 			sjo.resetElements(tooltipGroup, '*');
 			//tooltip rect
 			tooltipGroup.append('rect')
-				.attr('fill', tooltipColor)
+				.attr('fill', data.tooltipColor)
 				.attr('rx', 5)
 				.attr('ry', 5)
 				.attr('height', tooltipHeight)
 				.attr('width', tooltipWidth)
 			//tooltip time
 			tooltipGroup.append('text')
-				.attr('fill', textColor)
+				.attr('fill', data.textColor)
 				.style('font', data.tooltipTitleFont)
 				.attr('x', tooltipMargin)
 				.attr('y', tooltipMargin + tooltipTimeHeight)
@@ -474,7 +473,7 @@ console.log('CHWTrendData', CHWTrendData)
 			//tooltip values
 			textGroups.append('text')
 				.attr('x', tooltipCategoryWidth + spaceRightOfTooltipCategory)
-				.attr('fill', textColor)
+				.attr('fill', data.textColor)
 				.style('font', data.tooltipFont)
 				.text(d => sjo.formatValueToPrecision(widget.hoveredDatum[d === 'measured' ? 'MS' : d === 'setpoint' ? 'SP' : 'SQ'], data.precision) + ' ' + data.units);
 		}
@@ -493,7 +492,7 @@ console.log('CHWTrendData', CHWTrendData)
 		// *********************************************  Temps Header ******************************************************* //		
 		const tempsHeader = headerGroup.append('g').attr('class', 'tempsHeader').attr('transform', `translate(${maxTitleWidth + (spaceBetweenHeaders * 2) + tooltipWidth}, ${sjo.getTextHeight(data.labelFont)})`)
 		tempsHeader.append('text')
-			.attr('fill', textColor)
+			.attr('fill', data.textColor)
 			.style('font', data.labelFont)
 			.text('Temps')
 	
@@ -502,7 +501,7 @@ console.log('CHWTrendData', CHWTrendData)
 			.attr('cx', radioButtonSize / 2)
 			.attr('cy', spaceUnderLabels + (legendTextHeight / 2))
 			.attr('r', radioButtonSize / 2)
-			.attr('fill', backgroundColor)
+			.attr('fill', data.backgroundColor)
 			.attr('stroke', widget.waterSupplyTempType === 'CHW' ? CHWRadioButtonColor : unselectedRadioButton)
 			.style('stroke-width', '3px')
 			.on('click', () => {
@@ -514,7 +513,7 @@ console.log('CHWTrendData', CHWTrendData)
 			.on('mouseout', () => CHWText.style('font', data.legendFont))
 
 		const CHWText = tempsHeader.append('text')
-			.attr('fill', textColor)
+			.attr('fill', data.textColor)
 			.style('font', data.legendFont)
 			.attr('x', radioButtonSize + radioButtonMargin)
 			.attr('y', spaceUnderLabels + legendTextHeight)
@@ -532,7 +531,7 @@ console.log('CHWTrendData', CHWTrendData)
 		.attr('cy', spaceUnderLabels + (legendTextHeight / 2) )
 		.attr('cx', radioButtonSize + radioButtonMargin + sjo.getTextWidth('CHW', data.legendFont) + spaceBetweenRadioSelections + (radioButtonSize / 2)  )
 		.attr('r', radioButtonSize / 2)
-		.attr('fill', backgroundColor)
+		.attr('fill', data.backgroundColor)
 		.style('stroke-width', '3px')
 		.attr('stroke', widget.waterSupplyTempType === 'CDW' ? CDWRadioButtonColor : unselectedRadioButton)
 		.on('click', () => {
@@ -543,7 +542,7 @@ console.log('CHWTrendData', CHWTrendData)
 		.on('mouseover', () => CDWText.style('font', 'bold ' + data.legendFont))
 		.on('mouseout', () => CDWText.style('font', data.legendFont))
 	const CDWText = tempsHeader.append('text')
-		.attr('fill', textColor)
+		.attr('fill', data.textColor)
 		.style('font', data.legendFont)
 		.attr('x', (radioButtonSize * 2) + (radioButtonMargin * 2) + sjo.getTextWidth('CHW', data.legendFont) + spaceBetweenRadioSelections)
 		.attr('y', spaceUnderLabels + legendTextHeight)
@@ -590,7 +589,7 @@ console.log('CHWTrendData', CHWTrendData)
 	// *********************************************  View Header ******************************************************* //		
 	const viewHeader = headerGroup.append('g').attr('class', 'viewHeader').attr('transform', `translate(${maxTitleWidth + (spaceBetweenHeaders * 3) + tooltipWidth + tempsHeaderWidth}, ${sjo.getTextHeight(data.labelFont)})`)
 	viewHeader.append('text')
-		.attr('fill', textColor)
+		.attr('fill', data.textColor)
 		.style('font', data.labelFont)
 		.text('View')
 
@@ -599,7 +598,7 @@ console.log('CHWTrendData', CHWTrendData)
 		.attr('cx', radioButtonSize / 2)
 		.attr('cy', spaceUnderLabels + (legendTextHeight / 2))
 		.attr('r', radioButtonSize / 2)
-		.attr('fill', backgroundColor)
+		.attr('fill', data.backgroundColor)
 		.attr('stroke', widget.timeView === 'live' ? viewRadioButtonColor : unselectedRadioButton)
 		.style('stroke-width', '3px')
 		.on('click', () => {
@@ -611,7 +610,7 @@ console.log('CHWTrendData', CHWTrendData)
 		.on('mouseout', () => liveText.style('font', data.legendFont))
 
 	const liveText = viewHeader.append('text')
-		.attr('fill', textColor)
+		.attr('fill', data.textColor)
 		.style('font', data.legendFont)
 		.attr('x', radioButtonSize + radioButtonMargin)
 		.attr('y', spaceUnderLabels + legendTextHeight)
@@ -629,7 +628,7 @@ console.log('CHWTrendData', CHWTrendData)
 		.attr('cy', spaceUnderLabels + (legendTextHeight / 2) )
 		.attr('cx', radioButtonSize + radioButtonMargin + sjo.getTextWidth('Live', data.legendFont) + spaceBetweenRadioSelections + (radioButtonSize / 2)  )
 		.attr('r', radioButtonSize / 2)
-		.attr('fill', backgroundColor)
+		.attr('fill', data.backgroundColor)
 		.style('stroke-width', '3px')
 		.attr('stroke', widget.timeView === 'day' ? viewRadioButtonColor : unselectedRadioButton)
 		.on('click', () => {
@@ -640,7 +639,7 @@ console.log('CHWTrendData', CHWTrendData)
 		.on('mouseover', () => dayText.style('font', 'bold ' + data.legendFont))
 		.on('mouseout', () => dayText.style('font', data.legendFont))
 	const dayText = viewHeader.append('text')
-		.attr('fill', textColor)
+		.attr('fill', data.textColor)
 		.style('font', data.legendFont)
 		.attr('x', (radioButtonSize * 2) + (radioButtonMargin * 2) + sjo.getTextWidth('Live', data.legendFont) + spaceBetweenRadioSelections)
 		.attr('y', spaceUnderLabels + legendTextHeight)
@@ -741,7 +740,7 @@ console.log('CHWTrendData', CHWTrendData)
 			.text(d => d.legendName)
 			.attr('x', legendCircleSize + radioButtonMargin)
 			.attr('y', legendTextHeight)
-			.attr('fill', textColor)
+			.attr('fill', data.textColor)
 			.style('font', data.legendFont )
 			.style('text-decoration', d => widget[d.type + widget.waterSupplyTempType + 'Hidden'] ? 'line-through' : 'none' )
 
@@ -822,15 +821,15 @@ console.log('CHWTrendData', CHWTrendData)
 					.attr('text-anchor', 'end')
 					.attr('transform', 'rotate(-25)');
 
-		d3.selectAll('.axisY text').style('fill', textColor).style('font', data.tickFont)
-		d3.selectAll('.axisX text').style('fill', textColor).style('font', data.tickFont)
+		d3.selectAll('.axisY text').style('fill', data.textColor).style('font', data.tickFont)
+		d3.selectAll('.axisX text').style('fill', data.textColor).style('font', data.tickFont)
 
 
 		chartGroup.append('text')
 			.attr('x', spaceLeftOfTick)
 			.attr('dominant-baseline', 'central')
 			.style('font', data.labelFont)
-			.attr('fill', textColor)
+			.attr('fill', data.textColor)
 			.text(data.units)
 
 
@@ -847,7 +846,7 @@ console.log('CHWTrendData', CHWTrendData)
 			.enter().append('circle')
 				.attr('class', (d, i, nodes) => `${nodes[i].parentNode.__data__.type}Circle ${formatTimeForClass(d.time)}Circle circle`)
 				.attr('fill', (d, i, nodes) => nodes[i].parentNode.__data__.color)
-				.attr('stroke', backgroundColor)
+				.attr('stroke', data.backgroundColor)
 				.attr('stroke-width', 2)
 				.attr('cx', d => xScale(d.time))
 				.attr('cy', d => yScale(d.value))
@@ -939,6 +938,9 @@ console.log('CHWTrendData', CHWTrendData)
 		// *********************************************  CURSOR STYLING  ******************************************************* //		
 
 		widget.svg.selectAll('text').style('cursor', 'default');
+
+
+		console.log('data: ', data)
 
 	};
 	
