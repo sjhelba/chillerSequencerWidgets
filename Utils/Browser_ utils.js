@@ -22,3 +22,4 @@ const sjo = {};
 		const selectionForCheck = outerWidgetEl.selectAll(elementsToReset)
 		if (!selectionForCheck.empty()) selectionForCheck.remove();
   };
+  sjo.formatValueToPrecision = (value, precision) => d3.format(',.' + precision + 'f')(value);

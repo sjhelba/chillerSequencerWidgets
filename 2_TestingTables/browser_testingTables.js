@@ -83,6 +83,7 @@ const tbody = table.append('tbody')
 	.style('max-height', '200px')
 	.style('overflow-y', 'auto')	//or scroll	
 	.style('width', width + 'px')
+	.property('data-simplebar', true)
 
 //thead
 const headerRow = thead.append('tr').style('border-bottom', '2px solid black')
