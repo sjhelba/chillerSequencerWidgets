@@ -445,7 +445,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				.attr('x', tooltipCategoryWidth + spaceRightOfTooltipCategory)
 				.attr('fill', data.textColor)
 				.style('font', data.tooltipFont)
-				.text(d => sjo.formatValueToPrecision(widget.hoveredDatum[d === 'measured' ? 'MS' : d === 'setpoint' ? 'SP' : 'SQ'], data.precision) + ' ' + data.units);
+				.text(d => isNaN(widget.hoveredDatum[d === 'measured' ? 'MS' : d === 'setpoint' ? 'SP' : 'SQ']) ? '' : sjo.formatValueToPrecision(widget.hoveredDatum[d === 'measured' ? 'MS' : d === 'setpoint' ? 'SP' : 'SQ'], data.precision) + ' ' + data.units);
 		}
 			
 		
@@ -756,6 +756,12 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				.attr('stroke', gridColor)
 				.attr('stroke-width', 0.5)
 
+
+		// remove data outside of chart range (possible if data points missed in middle of data)
+		const dataForChart = widget.waterSupplyTempType === 'CHW' ? CHWTrendData : CDWTrendData;
+		dataForChart.forEach(cat => cat[widget.timeView + 'Data'] = cat[widget.timeView + 'Data'].filter(datum => datum.time >= xTickValues[0]))
+
+
 		const categoryGroups = chartGroup.selectAll('.categoryGroup')
 			.data(widget.waterSupplyTempType === 'CHW' ? CHWTrendData : CDWTrendData)
 			.enter().append('g')
@@ -825,12 +831,20 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 
 		// hoverable rectangles
-		const dataPerCat = widget.waterSupplyTempType === 'CHW' ? CHWTrendData.map(cat => cat[widget.timeView + 'Data']) : CDWTrendData.map(cat => cat[widget.timeView + 'Data']);
-		const dataByTime = dataPerCat[0].map((timeObj, index) => {
-			const objToReturn = {time: timeObj.time, MS: timeObj.value, SP: dataPerCat[1][index].value}
-			if (widget.waterSupplyTempType === 'CHW') objToReturn.SQ = dataPerCat[2][index].value
+		const timesPerCat = dataForChart.map(cat => cat[widget.timeView + 'Data']);
+		const dataWithMostTimes = timesPerCat.reduce((accum, curr) => accum.length > curr.length ? accum : curr);
+		const lastIndexOfTimes = dataWithMostTimes.length - 1;
+		const dataByTime = dataWithMostTimes.map((timeObj, index) => {
+			const reverseIndex = index - lastIndexOfTimes;
+			const objToReturn = {};
+			objToReturn.time = timeObj.time;
+			timesPerCat.forEach((cat, i) => {
+				const catIndex = (cat.length - 1) + reverseIndex;
+				if (cat[catIndex]) objToReturn[dataForChart[i].type] = cat[catIndex].value;
+			});
 			return objToReturn;
 		})
+
 		const dataByTimeLastIndex = dataByTime.length - 1;
 		const hoverableRectWidth = xScale(dataByTime[dataByTimeLastIndex].time) - xScale(dataByTime[dataByTimeLastIndex - 1].time);
 		chartGroup.selectAll('.hoverableRect')
