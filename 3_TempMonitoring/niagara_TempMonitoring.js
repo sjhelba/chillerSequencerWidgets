@@ -218,13 +218,13 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 	const renderWidget = (widget, data) => {
 		// ********************************************* Additional Definitions ******************************************************* //
 		const CHWTrendData = [
-			{ type: 'MS', legendName: 'Measured', liveData: data.CHWSupplyTrendData.slice(1430), dayData: data.CHWSupplyTrendData, color: data.measuredCHWTrendColor },
-			{ type: 'SP', legendName: 'Setpoint', liveData: data.CHWSetpointTrendData.slice(1430), dayData: data.CHWSetpointTrendData, color: data.setpointCHWTrendColor },
-			{ type: 'SQ', legendName: 'Sequence', liveData: data.CHWSequenceTrendData.slice(1430), dayData: data.CHWSequenceTrendData, color: data.sequenceCHWTrendColor }
+			{ type: 'MS', legendName: 'Measured', liveData: data.CHWSupplyTrendData.slice(-10), dayData: data.CHWSupplyTrendData, color: data.measuredCHWTrendColor },
+			{ type: 'SP', legendName: 'Setpoint', liveData: data.CHWSetpointTrendData.slice(-10), dayData: data.CHWSetpointTrendData, color: data.setpointCHWTrendColor },
+			{ type: 'SQ', legendName: 'Sequence', liveData: data.CHWSequenceTrendData.slice(-10), dayData: data.CHWSequenceTrendData, color: data.sequenceCHWTrendColor }
 		];
 		const CDWTrendData = [
-			{ type: 'MS', legendName: 'Measured', liveData: data.CDWSupplyTrendData.slice(1430), dayData: data.CDWSupplyTrendData, color: data.measuredCDWTrendColor },
-			{ type: 'SP', legendName: 'Setpoint', liveData: data.CDWSetpointTrendData.slice(1430), dayData: data.CDWSetpointTrendData, color: data.setpointCDWTrendColor }
+			{ type: 'MS', legendName: 'Measured', liveData: data.CDWSupplyTrendData.slice(-10), dayData: data.CDWSupplyTrendData, color: data.measuredCDWTrendColor },
+			{ type: 'SP', legendName: 'Setpoint', liveData: data.CDWSetpointTrendData.slice(-10), dayData: data.CDWSetpointTrendData, color: data.setpointCDWTrendColor }
 		];
 		const CHWLegendCategories = ['measured', 'setpoint', 'sequence'];
 		const CDWLegendCategories = ['measured', 'setpoint'];
@@ -266,11 +266,11 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		const paddingBetweenTooltipCategories = 5;
 		const paddingUnderTooltipTime = paddingBetweenTooltipCategories * 1.25;
 		const tooltipHeight = tooltipTimeHeight + (tooltipCategoryHeight * 3) + (paddingBetweenTooltipCategories * 2) + paddingUnderTooltipTime + (tooltipMargin * 2);
-
+		
 		const xAxisTicksHeight = tooltipHeight / 1.5;
 		const chartHeight = graphicHeight - (tooltipHeight + xAxisTicksHeight);
 		const pathStrokeWidth = 2.5;
-
+	
 
 		// COLORS
 		const unselectedRadioButton = '#C0C0C0';
@@ -309,29 +309,27 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		const yTickValues = getYTickValues();
 
 		function getXTickValues() {
-			let times = widget.waterSupplyTempType === 'CHW' ? CHWTrendData[0][widget.timeView + 'Data'].map(datum => datum.time) : CDWTrendData[0][widget.timeView + 'Data'].map(datum => datum.time);
-			if (widget.timeView === 'day') {
-				let dayTimes = [];
-				const lastIndex = times.length - 1;
-				let index = 0;
-				for (let count = 0; count < 12; count++) {
-					dayTimes.unshift(times[lastIndex - index]);
-					index += 120;
-				}
-				return dayTimes;
+			const tickVals = [];
+			const times = widget.waterSupplyTempType === 'CHW' ? CHWTrendData[0][widget.timeView + 'Data'] : CDWTrendData[0][widget.timeView + 'Data'];
+			const now = times[times.length - 1].time;
+			const nowMinutes = now.getMinutes();
+			const numberOfTicks = widget.timeView === 'day' ? 12 : 10;
+			const minutesPerInterval = widget.timeView === 'day' ? 120 : 1;
+			let lessMinutes = 0;
+			for (let count = 0; count < numberOfTicks; count++) {
+				const newDate = new Date(now);
+				newDate.setMinutes(nowMinutes - lessMinutes);
+				tickVals.unshift(newDate);
+				lessMinutes += minutesPerInterval;
 			}
-			return times;
+			return tickVals;
 		}
 		const xTickValues = getXTickValues();
 
-
 		// SCALING FUNCS	
 		const getTimeScale = () => {
-			const data = widget.waterSupplyTempType === 'CHW' ? CHWTrendData[0][widget.timeView + 'Data'] : CDWTrendData[0][widget.timeView + 'Data'];
-			const first = data[0].time;
-			const last = data[data.length - 1].time;
 			return d3.scaleTime()
-				.domain([first, last])
+				.domain([xTickValues[0], xTickValues[xTickValues.length - 1]])
 				.range([0, chartWidth]);
 		}
 		const xScale = getTimeScale();
@@ -340,7 +338,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.domain([yTickValues[0], yTickValues[4]]) //can be whatever you want the axis to cover
 			.range([chartHeight, 0]);
 
-
+		
 		// GENERATORS
 		const yAxisGenerator = d3.axisLeft(yScale)
 			.tickValues(yTickValues) 
@@ -364,6 +362,15 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.y0(chartHeight) //bottom line of area ( where x axis would go for most area charts)
 			.y1(d => yScale(d.value)) //top line of area (we'd take d off of the height because y works upside down by default if we did this w/o scale)
 			.curve(d3.curveCardinal)
+
+
+			
+
+
+
+
+
+
 
 		// ********************************************* DRAW ******************************************************* //
 		widget.svg 

@@ -187,12 +187,15 @@ function defineFuncForTabSpacing () {
 
 			});
 			function fillFakeArray(min, max, arrayToFill){
-				for (let i = 0; i <=1439; i++) {
+				for (let i = 0; i <= 1439; i++) {
+					// for (let i = 0; i <= 4; i++) {
+
 					let now = new Date();
 					now.setMinutes(now.getMinutes() - i);
 					arrayToFill.unshift({time: now, value: (Math.random() * (max - min)) + min});
 				}
 			}
+
 			//CHW Trends
 			fillFakeArray(41, 44.5, data.CHWSupplyTrendData);
 			fillFakeArray(42, 42, data.CHWSetpointTrendData);
@@ -200,6 +203,7 @@ function defineFuncForTabSpacing () {
 			//CDW Trends
 			fillFakeArray(41, 44.5, data.CDWSupplyTrendData);
 			fillFakeArray(42, 42, data.CDWSetpointTrendData);
+			console.log(data)
 
 		};
 
@@ -232,16 +236,17 @@ function defineFuncForTabSpacing () {
 	const renderWidget = (widget, data) => {
 		// ********************************************* Additional Definitions ******************************************************* //
 		const CHWTrendData = [
-			{ type: 'MS', legendName: 'Measured', liveData: data.CHWSupplyTrendData.slice(1430), dayData: data.CHWSupplyTrendData, color: data.measuredCHWTrendColor },
-			{ type: 'SP', legendName: 'Setpoint', liveData: data.CHWSetpointTrendData.slice(1430), dayData: data.CHWSetpointTrendData, color: data.setpointCHWTrendColor },
-			{ type: 'SQ', legendName: 'Sequence', liveData: data.CHWSequenceTrendData.slice(1430), dayData: data.CHWSequenceTrendData, color: data.sequenceCHWTrendColor }
+			{ type: 'MS', legendName: 'Measured', liveData: data.CHWSupplyTrendData.slice(-10), dayData: data.CHWSupplyTrendData, color: data.measuredCHWTrendColor },
+			{ type: 'SP', legendName: 'Setpoint', liveData: data.CHWSetpointTrendData.slice(-10), dayData: data.CHWSetpointTrendData, color: data.setpointCHWTrendColor },
+			{ type: 'SQ', legendName: 'Sequence', liveData: data.CHWSequenceTrendData.slice(-10), dayData: data.CHWSequenceTrendData, color: data.sequenceCHWTrendColor }
 		];
 		const CDWTrendData = [
-			{ type: 'MS', legendName: 'Measured', liveData: data.CDWSupplyTrendData.slice(1430), dayData: data.CDWSupplyTrendData, color: data.measuredCDWTrendColor },
-			{ type: 'SP', legendName: 'Setpoint', liveData: data.CDWSetpointTrendData.slice(1430), dayData: data.CDWSetpointTrendData, color: data.setpointCDWTrendColor }
+			{ type: 'MS', legendName: 'Measured', liveData: data.CDWSupplyTrendData.slice(-10), dayData: data.CDWSupplyTrendData, color: data.measuredCDWTrendColor },
+			{ type: 'SP', legendName: 'Setpoint', liveData: data.CDWSetpointTrendData.slice(-10), dayData: data.CDWSetpointTrendData, color: data.setpointCDWTrendColor }
 		];
 		const CHWLegendCategories = ['measured', 'setpoint', 'sequence'];
 		const CDWLegendCategories = ['measured', 'setpoint'];
+		console.log('CHWTrendData', CHWTrendData[0].liveData.map(obj => timeFormat()(obj.time)))
 
 		// SIZES
 			//horizontal
@@ -323,39 +328,27 @@ function defineFuncForTabSpacing () {
 		const yTickValues = getYTickValues();
 
 		function getXTickValues() {
-			let times = widget.waterSupplyTempType === 'CHW' ? CHWTrendData[0][widget.timeView + 'Data'].map(datum => datum.time) : CDWTrendData[0][widget.timeView + 'Data'].map(datum => datum.time);
-			if (widget.timeView === 'day') {
-				let dayTimes = [];
-				const lastIndex = times.length - 1;
-				let index = 0;
-				for (let count = 0; count < 12; count++) {
-					dayTimes.unshift(times[lastIndex - index]);
-					index += 120;
-				}
-				return dayTimes;
+			const tickVals = [];
+			const times = widget.waterSupplyTempType === 'CHW' ? CHWTrendData[0][widget.timeView + 'Data'] : CDWTrendData[0][widget.timeView + 'Data'];
+			const now = times[times.length - 1].time;
+			const nowMinutes = now.getMinutes();
+			const numberOfTicks = widget.timeView === 'day' ? 12 : 10;
+			const minutesPerInterval = widget.timeView === 'day' ? 120 : 1;
+			let lessMinutes = 0;
+			for (let count = 0; count < numberOfTicks; count++) {
+				const newDate = new Date(now);
+				newDate.setMinutes(nowMinutes - lessMinutes);
+				tickVals.unshift(newDate);
+				lessMinutes += minutesPerInterval;
 			}
-			// if (widget.timeView === 'day') {
-			// 	let dayTimes = [];
-			// 	const lastIndex = times.length - 1;
-			// 	let index = 0;
-			// 	for (let count = 0; count < 12; count++) {
-			// 		dayTimes.unshift(times[lastIndex - index]);
-			// 		index += 2;
-			// 	}
-			// 	return dayTimes;
-			// }
-			return times;
+			return tickVals;
 		}
 		const xTickValues = getXTickValues();
 
-
 		// SCALING FUNCS	
 		const getTimeScale = () => {
-			const data = widget.waterSupplyTempType === 'CHW' ? CHWTrendData[0][widget.timeView + 'Data'] : CDWTrendData[0][widget.timeView + 'Data'];
-			const first = data[0].time;
-			const last = data[data.length - 1].time;
 			return d3.scaleTime()
-				.domain([first, last])
+				.domain([xTickValues[0], xTickValues[xTickValues.length - 1]])
 				.range([0, chartWidth]);
 		}
 		const xScale = getTimeScale();
@@ -475,7 +468,7 @@ function defineFuncForTabSpacing () {
 				.attr('x', tooltipCategoryWidth + spaceRightOfTooltipCategory)
 				.attr('fill', data.textColor)
 				.style('font', data.tooltipFont)
-				.text(d => sjo.formatValueToPrecision(widget.hoveredDatum[d === 'measured' ? 'MS' : d === 'setpoint' ? 'SP' : 'SQ'], data.precision) + ' ' + data.units);
+				.text(d => isNaN(widget.hoveredDatum[d === 'measured' ? 'MS' : d === 'setpoint' ? 'SP' : 'SQ']) ? '' : sjo.formatValueToPrecision(widget.hoveredDatum[d === 'measured' ? 'MS' : d === 'setpoint' ? 'SP' : 'SQ'], data.precision) + ' ' + data.units);
 		}
 			
 		
@@ -786,8 +779,14 @@ function defineFuncForTabSpacing () {
 				.attr('stroke', gridColor)
 				.attr('stroke-width', 0.5)
 
+
+		// remove data outside of chart range (possible if data points missed in middle of data)
+		const dataForChart = widget.waterSupplyTempType === 'CHW' ? CHWTrendData : CDWTrendData;
+		dataForChart.forEach(cat => cat[widget.timeView + 'Data'] = cat[widget.timeView + 'Data'].filter(datum => datum.time >= xTickValues[0]))
+
+
 		const categoryGroups = chartGroup.selectAll('.categoryGroup')
-			.data(widget.waterSupplyTempType === 'CHW' ? CHWTrendData : CDWTrendData)
+			.data(dataForChart)
 			.enter().append('g')
 				.attr('class', d => `categoryGroup ${d.type}CategoryGroup`)
 				.attr('display', d => widget[`${d.type + widget.waterSupplyTempType}Hidden`] ? 'none' : 'block')
@@ -855,12 +854,24 @@ function defineFuncForTabSpacing () {
 
 
 		// hoverable rectangles
-		const dataPerCat = widget.waterSupplyTempType === 'CHW' ? CHWTrendData.map(cat => cat[widget.timeView + 'Data']) : CDWTrendData.map(cat => cat[widget.timeView + 'Data']);
-		const dataByTime = dataPerCat[0].map((timeObj, index) => {
-			const objToReturn = {time: timeObj.time, MS: timeObj.value, SP: dataPerCat[1][index].value}
-			if (widget.waterSupplyTempType === 'CHW') objToReturn.SQ = dataPerCat[2][index].value
+		const timesPerCat = dataForChart.map(cat => cat[widget.timeView + 'Data']);
+		const dataWithMostTimes = timesPerCat.reduce((accum, curr) => accum.length > curr.length ? accum : curr);
+		const lastIndexOfTimes = dataWithMostTimes.length - 1;
+		const dataByTime = dataWithMostTimes.map((timeObj, index) => {
+			const reverseIndex = index - lastIndexOfTimes;
+			const objToReturn = {};
+			objToReturn.time = timeObj.time;
+			timesPerCat.forEach((cat, i) => {
+				const catIndex = (cat.length - 1) + reverseIndex;
+				if (cat[catIndex]) objToReturn[dataForChart[i].type] = cat[catIndex].value;
+			});
 			return objToReturn;
 		})
+		// const dataByTime = dataForChart[0].map((timeObj, index) => {
+		// 	const objToReturn = {time: timeObj.time, MS: timeObj.value, SP: dataForChart[1][index].value}
+		// 	if (widget.waterSupplyTempType === 'CHW') objToReturn.SQ = dataForChart[2][index].value
+		// 	return objToReturn;
+		// })
 		const dataByTimeLastIndex = dataByTime.length - 1;
 		const hoverableRectWidth = xScale(dataByTime[dataByTimeLastIndex].time) - xScale(dataByTime[dataByTimeLastIndex - 1].time);
 		chartGroup.selectAll('.hoverableRect')
