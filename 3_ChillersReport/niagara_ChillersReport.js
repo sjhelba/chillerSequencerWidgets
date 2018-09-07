@@ -1,6 +1,6 @@
 /* global JsUtils */
 
-define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3.min'], function (Widget, subscriberMixIn, d3) {
+define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3.min', 'baja!', 'nmodule/COREx/rc/jsClasses/JsUtils'], function (Widget, subscriberMixIn, d3, baja, JsUtils) {
 	'use strict';
 
 ////////// Hard Coded Defs //////////
@@ -35,7 +35,16 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		return false;
 	};
 	const margin = 5;
-
+	const columnIndeces = {
+		name: 0,
+		status: 1,
+		availability: 2,
+		power: 3,
+		tons: 4,
+		efficiency: 5,
+		details: 6
+	};
+	const columns = ['name', 'status', 'availability', 'power', 'tons', 'efficiency', 'details']
 
 ////////////////////////////////////////////////////////////////
 	// Define Widget Constructor & Exposed Properties
@@ -110,17 +119,84 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		if (!widget.percentIsHovered) widget.percentIsHovered = false;
 
 
+		// DATA TO POPULATE
+		data.sortableTableData = [];
+
+
 		// GET DATA
-		return widget.resolve(`station:|slot:/tekWorxCEO/${data.systemName}`)	
-			.then(system => system.getNavChildren())	// get children folders of system folder
-			.then(folders => {
-				// calculated without ords
-        
-        
+		return widget.resolve(`station:|slot:/tekWorx/Equipment/Chillers`)	
+			.then(chillers => chillers.getNavChildren())	// get children folders of chillers folder
+			.then(chillerFolders => {
+
+				function getChillerData (chillerFolder) {
+					const arrForChiller = [];
+					chillerFolder.lease(500000);
+
+					const chillerName = chillerFolder.getNavName()
+					arrForChiller.push({column: 'name', value: chillerName, displayValue: chillerName})
+
+					const configEvapPoints = [];
+					const configCondPoints = [];
+					const operPowerPoints = [];
+					const operEvapPoints = [];
+					const operCondPoints = [];
+					const operStatusPoints = [];
+
+					const arrayToResolve = configEvapPoints.map(point => `station:|slot:/tekWorx/Equipment/Chillers/${chillerName}/Configuration/Evaporator/${point}`)
+						.concat(configCondPoints.map(point => `station:|slot:/tekWorx/Equipment/Chillers/${chillerName}/Configuration/Condenser/${point}`))
+						.concat(operPowerPoints.map(point => `station:|slot:/tekWorx/Equipment/Chillers/${chillerName}/Operating/Power/${point}`))
+						.concat(operEvapPoints.map(point => `station:|slot:/tekWorx/Equipment/Chillers/${chillerName}/Operating/Evaporator/${point}`))
+						.concat(operCondPoints.map(point => `station:|slot:/tekWorx/Equipment/Chillers/${chillerName}/Operating/Condenser/${point}`))
+						.concat(operStatusPoints.map(point => `station:|slot:/tekWorx/Equipment/Chillers/${chillerName}/Operating/Status/${point}`));
+
+
+					const batchResolve = new baja.BatchResolve(arrayToResolve);
+					const sub = new baja.Subscriber();
+
+					return batchResolve.resolve({ subscriber: sub })
+						.then(() => {
+							const chillerDataPoints = batchResolve.getTargetObjects();
+
+							const arrForChiller = [
+								{column: 'name', value: chillerName, displayValue: chillerName},
+								{column: 'status', value: 0, dispalyValue: ''},
+								{column: 'availability', value: 0, dispalyValue: ''},
+								{column: 'power', value: 0, dispalyValue: ''},
+								{column: 'tons', value: 0, dispalyValue: ''},
+								{column: 'efficiency', value: 0, dispalyValue: ''},
+								{column: 'details', value: {
+									evaporator: {
+										dp: {value: 0, precision: 1, units: '°F', min: 0, max: 0, design: 0},
+										flow: {value: 0, precision: 1, units: '°F', min: 0, max: 0, design: 0},
+										lwt: {value: 0, precision: 1, units: '°F', min: 0, max: 0, design: 0},
+										ewt: {value: 0, precision: 1, units: '°F', min: 0, max: 0, design: 0},
+										dt: {value: 0, precision: 1, units: '°F'}
+									},
+									condenser: {
+										dp: {value: 0, precision: 1, units: 'psi', min: 0, max: 0, design: 0},
+										flow: {value: 0, precision: 1, units: 'gpm', min: 0, max: 0, design: 0},
+										ewt: {value: 0, precision: 1, units: '°F', min: 0, max: 0, design: 0},
+										lwt: {value: 0, precision: 1, units: '°F', min: 0, max: 0, design: 0},
+										dt: {value: 0, precision: 1, units: '°F'}
+									},
+									status: {value: 0, precision: 0, units: '%', min: 0, max: 100}
+								}}
+							];
+							data.sortableTableData.push(arrForChiller);
+						})
 
 
 
-				// calculated with ords
+
+				}
+
+				const chillerDataPromises = chillerFolders.map(chillerFolder => getChillerData(chillerFolder));
+				return Promise.all(chillerDataPromises);
+
+
+			})
+			.then (() => {
+
         
         
 
