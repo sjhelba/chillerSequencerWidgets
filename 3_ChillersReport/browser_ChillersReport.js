@@ -163,15 +163,11 @@ function defineFuncForTabSpacing () {
 
 		const graphicGroup = widget.svg.append('g').attr('class', 'graphicGroup');
 
-
-		const centeredGroup = graphicGroup.append('g')
-			.attr('class', 'centeredGroup')
-			.attr('transform', `translate(${data.jqWidth / 2}, ${data.jqHeight / 2})`);
 		
-		// ********************************************* OUTER ELLIPSE ******************************************************* //
-		centeredGroup.append('ellipse')
-			.attr('rx', 40)
-			.attr('ry', 20)
+
+
+		
+
 
 	};
 	

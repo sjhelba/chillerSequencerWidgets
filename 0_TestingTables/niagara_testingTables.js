@@ -1,237 +1,279 @@
-define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3.min'], function (Widget, subscriberMixIn, d3) {
-	'use strict';
+define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3.min', 'moment', 'baja!'], function (Widget, subscriberMixIn, d3, moment, baja) {
+  "use strict";
 
-////////// Hard Coded Defs //////////
+  ////////// Hard Coded Defs //////////
+ 
+  ////////////////////////////////////////////////////////////////
+  // Define Widget Constructor & Exposed Properties
+  ////////////////////////////////////////////////////////////////
 
-	const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
-	const formatIntoPercentage = d3.format('.0%');
-	const getTextWidth = (text, font) => {
-		const canvas = document.createElement('canvas');
-		const context = canvas.getContext('2d');
-		context.font = font;
-		const width = context.measureText(text).width;
-		d3.select(canvas).remove()
-		return width;
-	};
-	const getTextHeight = font => {
-		let num = '';
-		const indexOfLastDigit = font.indexOf('pt') - 1;
-		for(let i = 0; i <= indexOfLastDigit; i++){
-			if(!isNaN(font[i]) || font[i] === '.') num += font[i];
-		}
-		num = +num;
-		return num * 1.33333333333;
-	};
-	const resetElements = (outerWidgetEl, elementsToReset) => {
-		const selectionForCheck = outerWidgetEl.selectAll(elementsToReset)
-		if (!selectionForCheck.empty()) selectionForCheck.remove();
-	};
-	const arePrimitiveValsInObjsSame = (obj1, obj2) => !Object.keys(obj1).some(key => (obj1[key] === null || (typeof obj1[key] !== 'object' && typeof obj1[key] !== 'function')) && obj1[key] !== obj2[key])
-	// 0 layers means obj only has primitive values
-	// this func only works with obj literals layered with obj literals until base layer only primitive
-	const checkNestedObjectsEquivalence = (objA, objB, layers) => {
-		if (layers === 0) {
-			return arePrimitiveValsInObjsSame(objA, objB);
-		} else {
-			const objAKeys = Object.keys(objA);
-			const objBKeys = Object.keys(objB);
-			if (objAKeys.length !== objBKeys.length) return false;
-			const somethingIsNotEquivalent = objAKeys.some(key => {
-				return !checkNestedObjectsEquivalence(objA[key], objB[key], layers - 1);
-			})
-			return !somethingIsNotEquivalent;
-		}
-	};
-	const needToRedrawWidget = (widget, newData) => {
-		const lastData = widget.data;
-		// check primitives for equivalence
-		if (!arePrimitiveValsInObjsSame(lastData, newData)) return true;
-		// check nested objs for equivalence
-		const monthlyModulesAreSame = checkNestedObjectsEquivalence(lastData.monthlyModulesData, newData.monthlyModulesData, 3);
-		const monthlyOverallAreSame = checkNestedObjectsEquivalence(lastData.monthlyOverallData, newData.monthlyOverallData, 2);
-		const annualModulesAreSame = checkNestedObjectsEquivalence(lastData.annualModulesData, newData.annualModulesData, 2);
-		const annualOverallAreSame = checkNestedObjectsEquivalence(lastData.annualOverallData, newData.annualOverallData, 1);
-		if (!monthlyModulesAreSame || !monthlyOverallAreSame || !annualModulesAreSame || !annualOverallAreSame) return true;
+  var TestingTables = function () {
+    var that = this;
+    Widget.apply(this, arguments);
 
-		//return false if nothing prompted true
-		return false;
-	};
-	const margin = {top: 5, left: 5, right: 5, bottom: 5};
+    subscriberMixIn(that);
+  };
+
+  TestingTables.prototype = Object.create(Widget.prototype);
+  TestingTables.prototype.constructor = TestingTables;
 
 
-////////////////////////////////////////////////////////////////
-	// Define Widget Constructor & Exposed Properties
-////////////////////////////////////////////////////////////////
 
-	var MyWidget = function () {
-		var that = this;
-		Widget.apply(this, arguments);
+  ////////////////////////////////////////////////////////////////
+  // Render Widget (invoke setupDefinitions() and, using returned data, append D3 elements into SVG)
+  ////////////////////////////////////////////////////////////////
 
-		that.properties().addAll([
-			{
-				name: 'backgroundColor',
-				value: 'white',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'includeCTFs',
-				value: true
-			},
-			{
-				name: 'paddingUnderLegendText',
-				value: 5
-			},
-			{
-				name: 'systemName',
-				value: 'systemName'
-			},
-			{
-				name: 'tooltipFillColor',
-				value: '#f2f2f2',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'modulePercentFont',
-				value: 'bold 26.0pt Nirmala UI',
-				typeSpec: 'gx:Font'
+  const renderWidget = widget => {
+	 	const outerDiv = widget.outerEl
+		if (!outerDiv.empty()) outerDiv.selectAll('*').remove();
+
+		const currentSort = {column: 'name', ascending: true};	//desc
+		const columnIndeces = {
+			name: 0,
+			status: 1,
+			availability: 2,
+			power: 3,
+			tons: 4,
+			efficiency: 5,
+			details: 6
+		};
+
+		const dataSort = column => {
+			if (currentSort.column === column) {
+				currentSort.ascending = !currentSort.ascending;
+			} else {
+				currentSort.column = column;
+				currentSort.ascending = true;
 			}
-		]);
-
-
-
-		subscriberMixIn(that);
-	};
-
-	MyWidget.prototype = Object.create(Widget.prototype);
-	MyWidget.prototype.constructor = MyWidget;
-
-
-
-////////////////////////////////////////////////////////////////
-	// /* SETUP DEFINITIONS AND DATA */
-////////////////////////////////////////////////////////////////
-
-
-	const setupDefinitions = widget => {
-		// FROM USER // 
-		const data = widget.properties().toValueMap();	//obj with all exposed properties as key/value pairs
-
-		// FROM JQ //
-		const jq = widget.jq();
-
-		//SIZING
-		data.jqHeight = jq.height() || 400;
-		data.jqWidth = jq.width() || 350;
-		data.graphicHeight = data.jqHeight - (margin.top + margin.bottom);
-		data.graphicWidth = data.jqWidth - (margin.left + margin.right);
-
-
-		// GLOBALS PER INSTANCE
-		if (!widget.hovered) widget.hovered = { optimized: false, standard: false, current: 'neither' };
-		if (!widget.activeModule) widget.activeModule = 'none';
-		if (!widget.percentIsHovered) widget.percentIsHovered = false;
-
-
-		// GET DATA
-		return widget.resolve(`station:|slot:/tekWorxCEO/${data.systemName}`)	
-			.then(system => system.getNavChildren())	// get children folders of system folder
-			.then(folders => {
-				// calculated without ords
-        
-        
-
-
-
-				// calculated with ords
-        
-        
-
-
-
-				return data;
-			})
-			.catch(err => console.error('Error (ord info promise rejected): ' + err));
-	};
-
-
-
-
-////////////////////////////////////////////////////////////////
-	// Render Widget (invoke setupDefinitions() and, using returned data, append D3 elements into SVG)
-////////////////////////////////////////////////////////////////
-
-	const renderWidget = (widget, data) => {
-    d3.select(widget.svg.node().parentNode).style('background-color', data.backgroundColor);
-		// delete leftover elements from versions previously rendered
-		if (!widget.svg.empty()) resetElements(widget.svg, '*');
-		const graphicGroup = widget.svg.append('g').attr('class', 'graphicGroup');
-
-
-
-
-    
-    
-
-
-
-
-
-	};
-
-
-	function render(widget, force) {
-		// invoking setupDefinitions, then returning value from successful promise to renderWidget func
-		return setupDefinitions(widget)
-			.then(data => {
-				if (force || !widget.data || needToRedrawWidget(widget, data)){
-					
-					renderWidget(widget, data);	
+			sortableTableData = sortableTableData.sort((a, b) => {
+				if (currentSort.ascending) {
+					const toReturn = a[columnIndeces[column]].value > b[columnIndeces[column]].value ? 1 : -1;
+					return toReturn;
+				} else {
+					const toReturn = b[columnIndeces[column]].value > a[columnIndeces[column]].value ? 1 : -1;
+					return toReturn;
 				}
-				widget.data = data;
-			})
-			.catch(err => console.error('render did not run properly: ' + err));
-	}
+			});
+			drawTbody();
+		};
 
 
-////////////////////////////////////////////////////////////////
-	// Initialize Widget
-////////////////////////////////////////////////////////////////
+		let sortableTableData = [
+			[
+				{column: 'name', value: 'Chiller 1'},
+				{column: 'status', value: 'Running'},
+				{column: 'availability', value: 'Available'},
+				{column: 'power', value: '0 kW'},
+				{column: 'tons', value: '0 tR'},
+				{column: 'efficiency', value: '0.000 kW/tR'},
+				{column: 'details', value: 'Chill1Details'}
+			],
+			[
+				{column: 'name', value: 'Chiller 2'},
+				{column: 'status', value: 'Running'},
+				{column: 'availability', value: 'Available'},
+				{column: 'power', value: '0 kW'},
+				{column: 'tons', value: '0 tR'},
+				{column: 'efficiency', value: '0.000 kW/tR'},
+				{column: 'details', value: 'Chill2Details'}
+			],
+			[
+				{column: 'name', value: 'Chiller 3'},
+				{column: 'status', value: 'Off'},
+				{column: 'availability', value: 'Unavailable'},
+				{column: 'power', value: '0 kW'},
+				{column: 'tons', value: '0 tR'},
+				{column: 'efficiency', value: '0.000 kW/tR'},
+				{column: 'details', value: 'Chill3Details'}
+			]
+		];
 
-	MyWidget.prototype.doInitialize = function (element) {
-		var that = this;
-		element.addClass('MyWidgetOuter');
-		const outerEl = d3.select(element[0])
-			.style('overflow', 'hidden')
-
-		that.svg = outerEl.append('svg')
-			.attr('class', 'MyWidget')
-			.style('overflow', 'hidden')
-			.attr('top', 0)
-			.attr('left', 0)
-			.attr('width', '100%')
-			.attr('height', '100%');
-
-		that.getSubscriber().attach('changed', function (prop, cx) { render(that) });
-	};
 
 
-////////////////////////////////////////////////////////////////
-	// Extra Widget Methods
-////////////////////////////////////////////////////////////////
+		const width = 800;
+		const colWidth = (width / 6) - 1;
+		const rowHeight = '25px'
+		const openRowHeight = 140
 
-	MyWidget.prototype.doLayout = MyWidget.prototype.doChanged = MyWidget.prototype.doLoad = function () { render(this); };
+
+		const table = outerDiv.append('table')
+			.style('background-color', 'white')
+			.style('width', width + 20 + 'px')
+			.style('border-collapse', 'collapse')
+			.style('text-align', 'left')
+			.style('cursor', 'default')
+
+		const thead = table.append('thead')
+			.style('display', 'block')
+			.style('width', width + 'px')
+		const tbody = table.append('tbody')
+			.style('display', 'block')
+			.style('max-height', '200px')
+			.style('overflow-y', 'auto')	//or scroll	
+			.style('width', width + 'px')
+
+		//thead
+		const headerRow = thead.append('tr').style('border-bottom', '2px solid black')
+			const th1 = headerRow.append('th')
+				.html('Name')
+				.style('width', colWidth + 'px')
+				.attr('class', 'header nameHeader')
+				.on('click', function(){
+					dataSort('name');
+				})
+			const th2 = headerRow.append('th')
+				.html('Status')
+				.style('width', colWidth + 'px')
+				.attr('class', 'header statusHeader')
+				.on('click', function(){
+					dataSort('status');
+				})
+			const th3 = headerRow.append('th')
+				.html('Availability')
+				.style('width', colWidth + 'px')
+				.attr('class', 'header availabilityHeader')
+				.on('click', function(){
+					dataSort('availability');
+				})
+			const th4 = headerRow.append('th')
+				.html('Power')
+				.style('width', colWidth + 'px')
+				.attr('class', 'header powerHeader')
+				.on('click', function(){
+					dataSort('power');
+				})
+			const th5 = headerRow.append('th')
+				.html('Tons')
+				.style('width', colWidth + 'px')
+				.attr('class', 'header tonsHeader')
+				.on('click', function(){
+					dataSort('tons');
+				})
+			const th6 = headerRow.append('th')
+				.html('Efficiency')
+				.style('width', colWidth + 'px')
+				.attr('class', 'header efficiencyHeader')
+				.on('click', function(){
+					dataSort('efficiency');
+				})
+
+
+		//tbody
+		drawTbody();
+		function drawTbody() {
+			if (!tbody.empty()) tbody.selectAll('*').remove();
+
+			const rows = tbody.selectAll('.row')
+				.data(sortableTableData)
+				.enter().append('tr')
+					.attr('class', 'row')
+					.style('background-color', (d, i) => i%2 ? 'rgb(239, 240, 242)' : 'white')
+					.attr('data-index', (d, i) => i)
+			
+			const cells = rows.selectAll('.cell')
+				.data(d => d.filter(obj => obj.column !== 'details') )
+				.enter().append('td')
+					.attr('class', function(d) {return `cell ${d.column}Cell row${this.parentNode.getAttribute('data-index')}Cell`}) 
+					.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
+					.style('width', colWidth + 'px')
+					.style('height', rowHeight)
+					.style('vertical-align', 'top')
+					.html(d => d.value)
+					.style('overflow', 'hidden')
+
+			const svgs = rows.append('svg')
+				.attr('class', function(d) {return `svg ${d.column}Svg row${this.parentNode.getAttribute('data-index')}Svg`})
+				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
+				.style('width', width + 'px')
+				.style('height', rowHeight)
+				.style('margin-left', `-${width}px`)
+				.on('click', function() {
+					const currentHeight = d3.select(this).style('height')
+					const rowIndex = +this.parentNode.getAttribute('data-index');
+					const thisRowCells = d3.selectAll(`.row${rowIndex}Cell,.row${rowIndex}Svg`)
+					thisRowCells.style('height', currentHeight === rowHeight ? openRowHeight + 'px' : rowHeight);
+				})
+
+
+			svgs.append('rect')
+				.attr('height', 10)
+				.attr('x', 15)
+				.attr('y', 60)
+				.attr('width', width - 30)
+				.attr('fill', 'pink')
+
+			svgs.append('text')
+				.text(function() {
+							const detailsColumnIndex = columnIndeces.details;
+							const rowIndex = this.parentNode.getAttribute('data-index');
+							const chillerObject = sortableTableData[rowIndex];
+							const chillerDetails = chillerObject[detailsColumnIndex].value;
+							return chillerDetails;
+						})
+				.attr('y', openRowHeight / 1.5 + 'px')
+				.attr('x', width / 2)
+
+
+		}
+
+
+    
+
+
+
+
+
+
+
+  };
+
+
+
+
+  function render(widget) {
+    // invoking setupDefinitions, then returning value from successful promise to renderWidget func
+   
+		renderWidget(widget);
+  }
+
+
+
+
+
+
+  ////////////////////////////////////////////////////////////////
+  // Initialize Widget
+  ////////////////////////////////////////////////////////////////
+
+  TestingTables.prototype.doInitialize = function (element) {
+    var that = this;
+    
+    element.addClass("TestingTablesOuter");
+    
+    that.outerEl = d3.select(element[0])
+      .style('overflow', 'hidden')
+
+    that.getSubscriber().attach("changed", function (prop, cx) { render(that) });
+  };
+
+
+  ////////////////////////////////////////////////////////////////
+  // Extra Widget Methods
+  ////////////////////////////////////////////////////////////////
+
+  TestingTables.prototype.doLayout = TestingTables.prototype.doChanged = TestingTables.prototype.doLoad = function () { render(this); };
 
 	/* FOR FUTURE NOTE: 
-	MyWidget.prototype.doChanged = function (name, value) {
-		  if(name === 'value') valueChanged += 'prototypeMethod - ';
+	TestingTables.prototype.doChanged = function (name, value) {
+		  if(name === "value") valueChanged += 'prototypeMethod - ';
 		  render(this);
 	};
 	*/
 
-	MyWidget.prototype.doDestroy = function () {
-		this.jq().removeClass('MyWidgetOuter');
-	};
+  TestingTables.prototype.doDestroy = function () {
+    this.jq().removeClass("TestingTablesOuter");
+  };
 
-	return MyWidget;
+  return TestingTables;
 });
 

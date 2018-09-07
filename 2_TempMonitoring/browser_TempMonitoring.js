@@ -1,4 +1,4 @@
-/* global sjo */
+/* global JsUtils */
 function defineFuncForTabSpacing () {
 
 	////////// Hard Coded Defs //////////
@@ -257,31 +257,31 @@ function defineFuncForTabSpacing () {
 		const chartWidth = graphicWidth - (chartHorizontalMargins * 2);
 		const radioButtonSize = 12;
 		const legendCircleSize = 9;
-		const maxTitleWidth = sjo.getTextWidth('Condenser Water Supply', data.titleFont);
+		const maxTitleWidth = JsUtils.getTextWidth('Condenser Water Supply', data.titleFont);
 
 		const tooltipMargin = 3;
 		const highestValue = [...data.CHWSupplyTrendData, ...data.CHWSetpointTrendData, ...data.CHWSequenceTrendData, ...data.CDWSupplyTrendData, ...data.CDWSetpointTrendData].reduce((accum, curr) => accum > curr.value ? accum : curr.value, 0)
-		const tooltipCategoryWidth = sjo.getTextWidth('SQ:', 'bold ' + data.tooltipFont);
-		const maxTooltipValueWidth = sjo.getTextWidth(sjo.formatValueToPrecision(highestValue, data.precision) + ' ' + data.units, data.tooltipFont);
-		const spaceRightOfTooltipCategory = sjo.getTextWidth('W', 'bold ' + data.tooltipFont);
+		const tooltipCategoryWidth = JsUtils.getTextWidth('SQ:', 'bold ' + data.tooltipFont);
+		const maxTooltipValueWidth = JsUtils.getTextWidth(JsUtils.formatValueToPrecision(highestValue, data.precision) + ' ' + data.units, data.tooltipFont);
+		const spaceRightOfTooltipCategory = JsUtils.getTextWidth('W', 'bold ' + data.tooltipFont);
 		const tooltipWidth = tooltipCategoryWidth + maxTooltipValueWidth + (tooltipMargin * 2) + spaceRightOfTooltipCategory;
 
 		const radioButtonMargin = 3;
-		const spaceBetweenRadioSelections = sjo.getTextWidth('W', data.legendFont)
-		const tempsHeaderWidth = (radioButtonSize * 2) + sjo.getTextWidth('CHW', data.legendFont) + spaceBetweenRadioSelections + sjo.getTextWidth('CDW', data.legendFont);
-		const viewHeaderWidth = (radioButtonSize * 2) + sjo.getTextWidth('Live', data.legendFont) + spaceBetweenRadioSelections + sjo.getTextWidth('24 Hours', data.legendFont);
-		const legendWidth = legendCircleSize + radioButtonMargin + sjo.getTextWidth('Measured', data.legendFont);
+		const spaceBetweenRadioSelections = JsUtils.getTextWidth('W', data.legendFont)
+		const tempsHeaderWidth = (radioButtonSize * 2) + JsUtils.getTextWidth('CHW', data.legendFont) + spaceBetweenRadioSelections + JsUtils.getTextWidth('CDW', data.legendFont);
+		const viewHeaderWidth = (radioButtonSize * 2) + JsUtils.getTextWidth('Live', data.legendFont) + spaceBetweenRadioSelections + JsUtils.getTextWidth('24 Hours', data.legendFont);
+		const legendWidth = legendCircleSize + radioButtonMargin + JsUtils.getTextWidth('Measured', data.legendFont);
 
 		const spaceBetweenHeaders = ( graphicWidth - (chartHorizontalMargins + maxTitleWidth + tooltipWidth + tempsHeaderWidth + viewHeaderWidth + legendWidth) ) / 4;
 
 			//vertical
 		const graphicHeight = data.jqHeight - (margin * 2);
-		const titleHeight = sjo.getTextHeight(data.titleFont)
-		const legendTextHeight = sjo.getTextHeight(data.legendFont);
+		const titleHeight = JsUtils.getTextHeight(data.titleFont)
+		const legendTextHeight = JsUtils.getTextHeight(data.legendFont);
 		const spaceUnderLabels = 8;
 
-		const tooltipTimeHeight = sjo.getTextHeight(data.tooltipTitleFont);
-		const tooltipCategoryHeight = sjo.getTextHeight('bold ' + data.tooltipFont);
+		const tooltipTimeHeight = JsUtils.getTextHeight(data.tooltipTitleFont);
+		const tooltipCategoryHeight = JsUtils.getTextHeight('bold ' + data.tooltipFont);
 		const paddingBetweenTooltipCategories = 5;
 		const paddingUnderTooltipTime = paddingBetweenTooltipCategories * 1.25;
 		const tooltipHeight = tooltipTimeHeight + (tooltipCategoryHeight * 3) + (paddingBetweenTooltipCategories * 2) + paddingUnderTooltipTime + (tooltipMargin * 2);
@@ -403,7 +403,7 @@ function defineFuncForTabSpacing () {
 		d3.select(widget.svg.node().parentNode).style('background-color', data.backgroundColor);
 		
 		// delete leftover elements from versions previously rendered
-		if (!widget.svg.empty()) sjo.resetElements(widget.svg, '*');
+		if (!widget.svg.empty()) JsUtils.resetElements(widget.svg, '*');
 
 		// ********************************************* GRAPHIC GROUP ******************************************************* //
 
@@ -437,7 +437,7 @@ function defineFuncForTabSpacing () {
 			.attr('class', 'tooltipGroup')
 			.attr('transform', `translate(${maxTitleWidth + spaceBetweenHeaders}, 0)`)
 		function drawTooltip () {
-			sjo.resetElements(tooltipGroup, '*');
+			JsUtils.resetElements(tooltipGroup, '*');
 			//tooltip rect
 			tooltipGroup.append('rect')
 				.attr('fill', data.tooltipColor)
@@ -468,7 +468,7 @@ function defineFuncForTabSpacing () {
 				.attr('x', tooltipCategoryWidth + spaceRightOfTooltipCategory)
 				.attr('fill', data.textColor)
 				.style('font', data.tooltipFont)
-				.text(d => isNaN(widget.hoveredDatum[d === 'measured' ? 'MS' : d === 'setpoint' ? 'SP' : 'SQ']) ? '' : sjo.formatValueToPrecision(widget.hoveredDatum[d === 'measured' ? 'MS' : d === 'setpoint' ? 'SP' : 'SQ'], data.precision) + ' ' + data.units);
+				.text(d => isNaN(widget.hoveredDatum[d === 'measured' ? 'MS' : d === 'setpoint' ? 'SP' : 'SQ']) ? '' : JsUtils.formatValueToPrecision(widget.hoveredDatum[d === 'measured' ? 'MS' : d === 'setpoint' ? 'SP' : 'SQ'], data.precision) + ' ' + data.units);
 		}
 			
 		
@@ -483,7 +483,7 @@ function defineFuncForTabSpacing () {
 
 
 		// *********************************************  Temps Header ******************************************************* //		
-		const tempsHeader = headerGroup.append('g').attr('class', 'tempsHeader').attr('transform', `translate(${maxTitleWidth + (spaceBetweenHeaders * 2) + tooltipWidth}, ${sjo.getTextHeight(data.labelFont)})`)
+		const tempsHeader = headerGroup.append('g').attr('class', 'tempsHeader').attr('transform', `translate(${maxTitleWidth + (spaceBetweenHeaders * 2) + tooltipWidth}, ${JsUtils.getTextHeight(data.labelFont)})`)
 		tempsHeader.append('text')
 			.attr('fill', data.textColor)
 			.style('font', data.labelFont)
@@ -522,7 +522,7 @@ function defineFuncForTabSpacing () {
 	//CDW Radio Button
 	tempsHeader.append('circle')
 		.attr('cy', spaceUnderLabels + (legendTextHeight / 2) )
-		.attr('cx', radioButtonSize + radioButtonMargin + sjo.getTextWidth('CHW', data.legendFont) + spaceBetweenRadioSelections + (radioButtonSize / 2)  )
+		.attr('cx', radioButtonSize + radioButtonMargin + JsUtils.getTextWidth('CHW', data.legendFont) + spaceBetweenRadioSelections + (radioButtonSize / 2)  )
 		.attr('r', radioButtonSize / 2)
 		.attr('fill', data.backgroundColor)
 		.style('stroke-width', '3px')
@@ -537,7 +537,7 @@ function defineFuncForTabSpacing () {
 	const CDWText = tempsHeader.append('text')
 		.attr('fill', data.textColor)
 		.style('font', data.legendFont)
-		.attr('x', (radioButtonSize * 2) + (radioButtonMargin * 2) + sjo.getTextWidth('CHW', data.legendFont) + spaceBetweenRadioSelections)
+		.attr('x', (radioButtonSize * 2) + (radioButtonMargin * 2) + JsUtils.getTextWidth('CHW', data.legendFont) + spaceBetweenRadioSelections)
 		.attr('y', spaceUnderLabels + legendTextHeight)
 		.text('CDW')
 		.on('click', () => {
@@ -566,7 +566,7 @@ function defineFuncForTabSpacing () {
 	} else {
 		tempsHeader.append('circle')
 			.attr('cy', spaceUnderLabels + (legendTextHeight / 2) )
-			.attr('cx', radioButtonSize + radioButtonMargin + sjo.getTextWidth('CHW', data.legendFont) + spaceBetweenRadioSelections + (radioButtonSize / 2)  )
+			.attr('cx', radioButtonSize + radioButtonMargin + JsUtils.getTextWidth('CHW', data.legendFont) + spaceBetweenRadioSelections + (radioButtonSize / 2)  )
 			.attr('r', radioButtonSize / 6)
 			.attr('fill', widget.waterSupplyTempType === 'CDW' ? CDWRadioButtonColor : unselectedRadioButton)
 			.on('click', () => {
@@ -580,7 +580,7 @@ function defineFuncForTabSpacing () {
 
 
 	// *********************************************  View Header ******************************************************* //		
-	const viewHeader = headerGroup.append('g').attr('class', 'viewHeader').attr('transform', `translate(${maxTitleWidth + (spaceBetweenHeaders * 3) + tooltipWidth + tempsHeaderWidth}, ${sjo.getTextHeight(data.labelFont)})`)
+	const viewHeader = headerGroup.append('g').attr('class', 'viewHeader').attr('transform', `translate(${maxTitleWidth + (spaceBetweenHeaders * 3) + tooltipWidth + tempsHeaderWidth}, ${JsUtils.getTextHeight(data.labelFont)})`)
 	viewHeader.append('text')
 		.attr('fill', data.textColor)
 		.style('font', data.labelFont)
@@ -619,7 +619,7 @@ function defineFuncForTabSpacing () {
 	//Day Radio Button
 	viewHeader.append('circle')
 		.attr('cy', spaceUnderLabels + (legendTextHeight / 2) )
-		.attr('cx', radioButtonSize + radioButtonMargin + sjo.getTextWidth('Live', data.legendFont) + spaceBetweenRadioSelections + (radioButtonSize / 2)  )
+		.attr('cx', radioButtonSize + radioButtonMargin + JsUtils.getTextWidth('Live', data.legendFont) + spaceBetweenRadioSelections + (radioButtonSize / 2)  )
 		.attr('r', radioButtonSize / 2)
 		.attr('fill', data.backgroundColor)
 		.style('stroke-width', '3px')
@@ -634,7 +634,7 @@ function defineFuncForTabSpacing () {
 	const dayText = viewHeader.append('text')
 		.attr('fill', data.textColor)
 		.style('font', data.legendFont)
-		.attr('x', (radioButtonSize * 2) + (radioButtonMargin * 2) + sjo.getTextWidth('Live', data.legendFont) + spaceBetweenRadioSelections)
+		.attr('x', (radioButtonSize * 2) + (radioButtonMargin * 2) + JsUtils.getTextWidth('Live', data.legendFont) + spaceBetweenRadioSelections)
 		.attr('y', spaceUnderLabels + legendTextHeight)
 		.text('24 Hours')
 		.on('click', () => {
@@ -663,7 +663,7 @@ function defineFuncForTabSpacing () {
 	} else {
 		viewHeader.append('circle')
 			.attr('cy', spaceUnderLabels + (legendTextHeight / 2) )
-			.attr('cx', radioButtonSize + radioButtonMargin + sjo.getTextWidth('Live', data.legendFont) + spaceBetweenRadioSelections + (radioButtonSize / 2)  )
+			.attr('cx', radioButtonSize + radioButtonMargin + JsUtils.getTextWidth('Live', data.legendFont) + spaceBetweenRadioSelections + (radioButtonSize / 2)  )
 			.attr('r', radioButtonSize / 6)
 			.attr('fill', widget.timeView === 'day' ? viewRadioButtonColor : unselectedRadioButton)
 			.on('click', () => {
@@ -913,7 +913,7 @@ function defineFuncForTabSpacing () {
 		function unhover () {
 			widget.hoveredDatum = 'none'
 			d3.selectAll('.circle').style('opacity', 0)
-			sjo.resetElements(d3.select('.tooltipGroup'), '*')
+			JsUtils.resetElements(d3.select('.tooltipGroup'), '*')
 		}
 		
 		function attemptUnhover () {
