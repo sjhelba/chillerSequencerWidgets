@@ -43,3 +43,4 @@ define(['nmodule/COREx/rc/d3/d3.min', 'baja!',], function (d3, baja) {
   return JsUtils;
 
 });
+

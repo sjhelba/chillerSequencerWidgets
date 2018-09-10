@@ -27,7 +27,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 	 	const outerDiv = widget.outerEl
 		if (!outerDiv.empty()) outerDiv.selectAll('*').remove();
 
-		const currentSort = {column: 'name', ascending: true};	//desc
+		const currentSort = {column: 'name', ascending: true};
 		const columnIndeces = {
 			name: 0,
 			status: 1,

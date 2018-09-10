@@ -36,15 +36,41 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 	};
 	const margin = 5;
 	const columnIndeces = {
-		name: 0,
-		status: 1,
-		availability: 2,
-		power: 3,
-		tons: 4,
-		efficiency: 5,
-		details: 6
+		Name: 0,
+		Status: 1,
+		Availability: 2,
+		Power: 3,
+		Tons: 4,
+		Efficiency: 5,
+		Details: 6
 	};
-	const columns = ['name', 'status', 'availability', 'power', 'tons', 'efficiency', 'details']
+	const columns = ['Name', 'Status', 'Availability', 'Power', 'Tons', 'Efficiency', 'Details'];
+	
+	// Set up for data collection (indeces commented)
+	const configEvapPoints = ['DP', 'MinimumDP', 'MaximumDP', 'Flow', 'MinimumFlow', 'MaximumFlow', 'EWT', 'LWT', 'MinimumLWT', 'MaximumLWT'];	// 0 - 9
+	const configCondPoints = ['DP', 'MinimumDP', 'MaximumDP', 'Flow', 'MinimumFlow', 'MaximumFlow', 'LWT', 'EWT', 'MinimumEWT', 'MaximumEWT'];	// 10 - 19
+	const operPowerPoints = ['Tons', 'PercentRLA', 'kW', 'Efficiency'];	// 20 - 23
+	const operEvapPoints = ['DP', 'Flow', 'EWT', 'LWT', 'DeltaT'];	// 24 - 28
+	const operCondPoints = ['DP', 'Flow', 'EWT', 'LWT', 'DeltaT'];	// 29 - 33
+	const operStatusPoints = ['Available', 'Running'];	//34 - 35
+
+
+	const dataSort = (column, widget) => {
+		if (widget.currentSort.column === column) {
+			widget.currentSort.ascending = !widget.currentSort.ascending;
+		} else {
+			widget.currentSort.column = column;
+			widget.currentSort.ascending = true;
+		}
+
+		widget.sortableTableData = widget.sortableTableData.sort((a, b) => {
+			if (widget.currentSort.ascending) {
+				return a[columnIndeces[column]].value > b[columnIndeces[column]].value ? 1 : -1;
+			} else {
+				return b[columnIndeces[column]].value > a[columnIndeces[column]].value ? 1 : -1;
+			}
+		});
+	};
 
 ////////////////////////////////////////////////////////////////
 	// Define Widget Constructor & Exposed Properties
@@ -55,33 +81,33 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		Widget.apply(this, arguments);
 
 		that.properties().addAll([
-			{
-				name: 'backgroundColor',
-				value: 'white',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'includeCTFs',
-				value: true
-			},
-			{
-				name: 'paddingUnderLegendText',
-				value: 5
-			},
-			{
-				name: 'systemName',
-				value: 'systemName'
-			},
-			{
-				name: 'tooltipFillColor',
-				value: '#f2f2f2',
-				typeSpec: 'gx:Color'
-			},
-			{
-				name: 'modulePercentFont',
-				value: 'bold 26.0pt Nirmala UI',
-				typeSpec: 'gx:Font'
-			}
+			// {
+			// 	name: 'backgroundColor',
+			// 	value: 'white',
+			// 	typeSpec: 'gx:Color'
+			// },
+			// {
+			// 	name: 'includeCTFs',
+			// 	value: true
+			// },
+			// {
+			// 	name: 'paddingUnderLegendText',
+			// 	value: 5
+			// },
+			// {
+			// 	name: 'systemName',
+			// 	value: 'systemName'
+			// },
+			// {
+			// 	name: 'tooltipFillColor',
+			// 	value: '#f2f2f2',
+			// 	typeSpec: 'gx:Color'
+			// },
+			// {
+			// 	name: 'modulePercentFont',
+			// 	value: 'bold 26.0pt Nirmala UI',
+			// 	typeSpec: 'gx:Font'
+			// }
 		]);
 
 
@@ -113,14 +139,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		data.graphicWidth = data.jqWidth - (margin * 2);
 
 
-		// GLOBALS PER INSTANCE
-		if (!widget.hovered) widget.hovered = { optimized: false, standard: false, current: 'neither' };
-		if (!widget.activeModule) widget.activeModule = 'none';
-		if (!widget.percentIsHovered) widget.percentIsHovered = false;
-
-
 		// DATA TO POPULATE
-		data.sortableTableData = [];
+		data.unsortableTableData = [];
 
 
 		// GET DATA
@@ -129,18 +149,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.then(chillerFolders => {
 
 				function getChillerData (chillerFolder) {
-					const arrForChiller = [];
 					chillerFolder.lease(500000);
-
 					const chillerName = chillerFolder.getNavName()
-					arrForChiller.push({column: 'name', value: chillerName, displayValue: chillerName})
-
-					const configEvapPoints = [];
-					const configCondPoints = [];
-					const operPowerPoints = [];
-					const operEvapPoints = [];
-					const operCondPoints = [];
-					const operStatusPoints = [];
 
 					const arrayToResolve = configEvapPoints.map(point => `station:|slot:/tekWorx/Equipment/Chillers/${chillerName}/Configuration/Evaporator/${point}`)
 						.concat(configCondPoints.map(point => `station:|slot:/tekWorx/Equipment/Chillers/${chillerName}/Configuration/Condenser/${point}`))
@@ -149,62 +159,73 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 						.concat(operCondPoints.map(point => `station:|slot:/tekWorx/Equipment/Chillers/${chillerName}/Operating/Condenser/${point}`))
 						.concat(operStatusPoints.map(point => `station:|slot:/tekWorx/Equipment/Chillers/${chillerName}/Operating/Status/${point}`));
 
-
 					const batchResolve = new baja.BatchResolve(arrayToResolve);
 					const sub = new baja.Subscriber();
 
 					return batchResolve.resolve({ subscriber: sub })
 						.then(() => {
-							const chillerDataPoints = batchResolve.getTargetObjects();
+							const chillerDataPoints = batchResolve.getTargetObjects().map(point => point.get('out').get('value') );
+							const pointVals = {};
+							chillerDataPoints.forEach((pointVal, index) => {
+								let pointName;
+								if (index < 10) {
+									pointName = 'configEvap_' + configEvapPoints[index];
+								} else if ( index < 20 ) {
+									pointName = 'configCond_' + configCondPoints[index - 10];
+								} else if ( index < 24 ) {
+									pointName = 'operPower_' + operPowerPoints[index - 20];
+								} else if ( index < 29 ) {
+									pointName = 'operEvap_' + operEvapPoints[index - 24];
+								} else if ( index < 34 ) {
+									pointName = 'operCond_' + operCondPoints[index - 29];
+								} else {
+									pointName = 'operStatus_' + operStatusPoints[index - 34];
+								}
+								pointVals[pointName] = pointVal;
+							});
 
 							const arrForChiller = [
-								{column: 'name', value: chillerName, displayValue: chillerName},
-								{column: 'status', value: 0, dispalyValue: ''},
-								{column: 'availability', value: 0, dispalyValue: ''},
-								{column: 'power', value: 0, dispalyValue: ''},
-								{column: 'tons', value: 0, dispalyValue: ''},
-								{column: 'efficiency', value: 0, dispalyValue: ''},
-								{column: 'details', value: {
+								{column: 'Name', value: chillerName, displayValue: chillerName},
+								{column: 'Status', value: pointVals.operStatus_Running ? 'Running' : 'Off', displayValue: pointVals.operStatus_Running ? 'Running' : 'Off'},
+								{column: 'Availability', value: pointVals.operStatus_Available ? 'Available' : 'Unavailable', displayValue: pointVals.operStatus_Available ? 'Available' : 'Unavailable'},
+								{column: 'Power', value: pointVals.operPower_kW, displayValue: JsUtils.formatValueToPrecision(pointVals.operPower_kW, 0) + ' kW'},
+								{column: 'Tons', value: pointVals.operPower_Tons, displayValue: JsUtils.formatValueToPrecision(pointVals.operPower_Tons, 0) + ' tR'},
+								{column: 'Efficiency', value: pointVals.operPowerEfficiency, displayValue: JsUtils.formatValueToPrecision(pointVals.operPowerEfficiency, 3) + ' kW/tR'},
+								{column: 'Details', value: {
 									evaporator: {
-										dp: {value: 0, precision: 1, units: '°F', min: 0, max: 0, design: 0},
-										flow: {value: 0, precision: 1, units: '°F', min: 0, max: 0, design: 0},
-										lwt: {value: 0, precision: 1, units: '°F', min: 0, max: 0, design: 0},
-										ewt: {value: 0, precision: 1, units: '°F', min: 0, max: 0, design: 0},
-										dt: {value: 0, precision: 1, units: '°F'}
+										dp: {value: pointVals.operEvap_DP, min: pointVals.configEvap_MinimumDP, max: pointVals.configEvap_MaximumDP, design: pointVals.configEvap_DP, displayValue: JsUtils.formatValueToPrecision(pointVals.operEvap_DP, 1) + ' psi'},
+										flow: {value: pointVals.operEvap_Flow, min: pointVals.configEvap_MinimumFlow, max: pointVals.configEvap_MaximumFlow, design: pointVals.configEvap_Flow, displayValue: JsUtils.formatValueToPrecision(pointVals.operEvap_Flow, 0) + ' gpm'},
+										lwt: {value: pointVals.operEvap_LWT, min: pointVals.configEvap_MinimumLWT, max: pointVals.configEvap_MaximumLWT, design: pointVals.configEvap_LWT, displayValue: JsUtils.formatValueToPrecision(pointVals.operEvap_LWT, 1) + ' °F'},
+										ewt: {value: pointVals.operEvap_EWT, min: pointVals.configEvap_LWT, max: pointVals.configEvap_EWT + (pointVals.configEvap_MaximumLWT - pointVals.configEvap_LWT), design: pointVals.configEvap_EWT, displayValue: JsUtils.formatValueToPrecision(pointVals.operEvap_EWT, 1) + ' °F'},
+										dt: {value: pointVals.operEvap_DeltaT, displayValue: JsUtils.formatValueToPrecision(pointVals.operEvap_DeltaT, 1) + ' °F'}
 									},
 									condenser: {
-										dp: {value: 0, precision: 1, units: 'psi', min: 0, max: 0, design: 0},
-										flow: {value: 0, precision: 1, units: 'gpm', min: 0, max: 0, design: 0},
-										ewt: {value: 0, precision: 1, units: '°F', min: 0, max: 0, design: 0},
-										lwt: {value: 0, precision: 1, units: '°F', min: 0, max: 0, design: 0},
-										dt: {value: 0, precision: 1, units: '°F'}
+										dp: {value: pointVals.operCond_DP, min: pointVals.configCond_MinimumDP, max: pointVals.configCond_MaximumDP, design: pointVals.configCond_DP, displayValue: JsUtils.formatValueToPrecision(pointVals.operCond_DP, 1) + ' psi'},
+										flow: {value: pointVals.operCond_Flow, min: pointVals.configCond_MinimumFlow, max: pointVals.configCond_MaximumFlow, design: pointVals.configCond_Flow, displayValue: JsUtils.formatValueToPrecision(pointVals.operCond_Flow, 0) + ' gpm'},
+										ewt: {value: pointVals.operCond_EWT, min: pointVals.configCond_MinimumEWT, max: pointVals.configCond_MaximumEWT, design: pointVals.configCond_EWT, displayValue: JsUtils.formatValueToPrecision(pointVals.operCond_EWT, 1) + ' °F'},
+										lwt: {value: pointVals.operCond_LWT, min: pointVals.configCond_EWT, max: pointVals.configCond_LWT - (pointVals.configCond_MaximumEWT - pointVals.configCond_EWT), design: pointVals.configCond_LWT, displayValue: JsUtils.formatValueToPrecision(pointVals.operCond_LWT, 1) + ' °F'},
+										dt: {value: pointVals.operCond_DeltaT, displayValue: JsUtils.formatValueToPrecision(pointVals.operCond_DeltaT, 1) + ' °F'}
 									},
-									status: {value: 0, precision: 0, units: '%', min: 0, max: 100}
+									status: {value: pointVals.operPower_PercentRLA, min: 0, max: 100, displayValue: JsUtils.formatValueToPrecision(pointVals.operPower_PercentRLA, 0) + ' %'}
 								}}
 							];
-							data.sortableTableData.push(arrForChiller);
-						})
-
-
-
-
+							
+							data.unsortableTableData.push(arrForChiller);
+						});
 				}
 
 				const chillerDataPromises = chillerFolders.map(chillerFolder => getChillerData(chillerFolder));
 				return Promise.all(chillerDataPromises);
-
-
 			})
-			.then (() => {
-
-        
-        
-
+			.then(() => {
+				// GLOBALS PER INSTANCE
+				if (!widget.currentSort) widget.currentSort = { column: 'name', ascending: true }; 
+				if (!widget.sortableTableData) widget.sortableTableData = data.unsortableTableData.map(chillers => chillers.map(chiller => Object.assign({}, chiller)));
 
 
 				return data;
 			})
-			.catch(err => console.error('Error (ord info promise rejected): ' + err));
+			.catch(err => console.error('Chillers Report Error (ord info promise rejected): ' + err));
 	};
 
 
@@ -259,11 +280,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 		that.svg = outerEl.append('svg')
 			.attr('class', 'MyWidget')
-			.style('overflow', 'hidden')
-			.attr('top', 0)
-			.attr('left', 0)
-			.attr('width', '100%')
-			.attr('height', '100%');
+			.style('overflow', 'hidden');
 
 		that.getSubscriber().attach('changed', function (prop, cx) { render(that) });
 	};
