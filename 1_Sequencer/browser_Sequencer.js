@@ -324,6 +324,7 @@ function defineFuncForTabSpacing () {
 			meterGroup,
 			backgroundColor,
 			enabledCircleColor,
+			textColor,
 			meterObjHeight,
 			meterWidth,
 			'Optimized Hours',

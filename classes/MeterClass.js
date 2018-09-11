@@ -1,6 +1,6 @@
 
 class Meter {
-	constructor(elementToAppendMeterTo, elementToAppendTooltipTo, backgroundColor, foregroundBarColor, height, width, title, units, precision, titleFont, unitsFont, numFont, meterVal, minVal, maxVal, hasTooltip, designVal) {
+	constructor(elementToAppendMeterTo, elementToAppendTooltipTo, backgroundColor, foregroundBarColor, fontColor, height, width, title, units, precision, titleFont, unitsFont, numFont, meterVal, minVal, maxVal, hasTooltip, designVal) {
 		this.backgroundColor = backgroundColor;
 		this.foregroundBarColor = foregroundBarColor;
 		this.height = height;
@@ -19,7 +19,7 @@ class Meter {
 		this.horizontalTextPadding = 3;
 		this.verticalTextPadding = 2;
 		this.backgroundBarColor = '#e0ebeb';
-    this.textColor = 'black';
+    this.textColor = fontColor;
     this.previousMeterVal = this.meterVal;
 		this.calculateCalculatedProps();
 		this.hasTooltip = hasTooltip;
@@ -30,10 +30,10 @@ class Meter {
 	}
 
   calculateCalculatedProps() {
-    this.heights = {title: getTextHeight(this.titleFont), units: getTextHeight(this.unitsFont), num: getTextHeight(this.numFont)};
+    this.heights = {title: JsUtils.getTextHeight(this.titleFont), units: JsUtils.getTextHeight(this.unitsFont), num: JsUtils.getTextHeight(this.numFont)};
     this.isDesignVal = this.designVal || this.designVal === 0 ? true : false;
-		this.greatestTextHeight = d3.max([getTextHeight(this.titleFont), getTextHeight(this.unitsFont), getTextHeight(this.numFont)]);
-    this.greatestNumWidth = d3.max([getTextWidth(formatValueToPrecision(this.minVal, this.precision), this.numFont), getTextWidth(formatValueToPrecision(this.maxVal, this.precision), this.numFont), this.isDesignVal ? getTextWidth(formatValueToPrecision(this.designVal, this.precision), this.numFont) : 0]);
+		this.greatestTextHeight = d3.max([JsUtils.getTextHeight(this.titleFont), JsUtils.getTextHeight(this.unitsFont), JsUtils.getTextHeight(this.numFont)]);
+    this.greatestNumWidth = d3.max([JsUtils.getTextWidth(JsUtils.formatValueToPrecision(this.minVal, this.precision), this.numFont), JsUtils.getTextWidth(JsUtils.formatValueToPrecision(this.maxVal, this.precision), this.numFont), this.isDesignVal ? JsUtils.getTextWidth(JsUtils.formatValueToPrecision(this.designVal, this.precision), this.numFont) : 0]);
     this.barLength = this.width - (this.margin * 2);
     this.barHeight = this.height - ( (this.margin * 2) + this.greatestTextHeight + this.verticalTextPadding );
   }
@@ -75,9 +75,10 @@ class Meter {
 			//designValBar
 			barGroup.append('rect')
 				.attr('class', 'designValBar')
-				.attr('height', this.barHeight)
-				.attr('width', this.barHeight * 0.2)
+				.attr('height', this.barHeight + (this.barHeight / 2))
+				.attr('width', this.barHeight * 0.4)
 				.attr('x', scaleValue(this.designVal, this.minVal, this.maxVal, this.barLength))
+				.attr('y', -(this.barHeight / 4))
 				.attr('fill', this.backgroundColor)
 				.attr('stroke', 'none');
 		}
@@ -99,11 +100,11 @@ class Meter {
 		textGroup.append('text')
 			.attr('class', 'meterValText')
 			.style('font', this.numFont)
-			.text(formatValueToPrecision(this.previousMeterVal, this.precision))
+			.text(JsUtils.formatValueToPrecision(this.previousMeterVal, this.precision))
 			.attr('fill', this.textColor)
       .attr('x', 0)
       .transition()
-        .text(formatValueToPrecision(this.meterVal, this.precision))
+        .text(JsUtils.formatValueToPrecision(this.meterVal, this.precision))
 
 		//unitsText
 		textGroup.append('text')
@@ -111,9 +112,9 @@ class Meter {
 			.style('font', this.unitsFont)
 			.text(this.units)
 			.attr('fill', this.textColor)
-      .attr('x', getTextWidth(formatValueToPrecision(this.previousMeterVal, this.precision), this.numFont) + this.horizontalTextPadding)
+      .attr('x', JsUtils.getTextWidth(JsUtils.formatValueToPrecision(this.previousMeterVal, this.precision), this.numFont) + this.horizontalTextPadding)
       .transition()
-        .attr('x', getTextWidth(formatValueToPrecision(this.meterVal, this.precision), this.numFont) + this.horizontalTextPadding)
+        .attr('x', JsUtils.getTextWidth(JsUtils.formatValueToPrecision(this.meterVal, this.precision), this.numFont) + this.horizontalTextPadding)
 
 		//titleText
 		textGroup.append('text')
@@ -140,16 +141,16 @@ class Meter {
 
 
 	static getHeightFromMeterHeight(meterHeight, titleFont, unitsFont, numFont) {
-		return meterHeight + d3.max([getTextHeight(titleFont), getTextHeight(unitsFont), getTextHeight(numFont)]) + 6 + 2;
+		return meterHeight + d3.max([JsUtils.getTextHeight(titleFont), JsUtils.getTextHeight(unitsFont), JsUtils.getTextHeight(numFont)]) + 6 + 2;
 	}
 
   //  {paramName: newArg, paramName: newArg, paramName: newArg}
   redrawWithNewArgs(newArgsObj) {
 		const that = this;
 		if (this.hasTooltip) {
-			resetElements(that.tooltip.element, '*');
+			JsUtils.resetElements(that.tooltip.element, '*');
 		}
-    resetElements(that.element, '*');
+    JsUtils.resetElements(that.element, '*');
     that.previousMeterVal = that.meterVal;
     let count = 0;
     for (let param in newArgsObj) {
