@@ -52,7 +52,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 	const operPowerPoints = ['Tons', 'PercentRLA', 'kW', 'Efficiency'];	// 20 - 23
 	const operEvapPoints = ['DP', 'Flow', 'EWT', 'LWT', 'DeltaT'];	// 24 - 28
 	const operCondPoints = ['DP', 'Flow', 'EWT', 'LWT', 'DeltaT'];	// 29 - 33
-	const operStatusPoints = ['Available', 'Running'];	//34 - 35
+	const operStatusPoints = ['Available', 'Running', 'Called'];	//34 - 36
 
 
 	const dataSort = (column, widget) => {
@@ -176,8 +176,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 							const arrForChiller = [
 								{column: 'Item', value: chillerIndex, displayValue: chillerName},
-								{column: 'Status', value: pointVals.operStatus_Running ? 'Running' : 'Off', displayValue: pointVals.operStatus_Running ? 'Running' : 'Off'},
-								{column: 'Availability', value: pointVals.operStatus_Available ? 'Available' : 'Unavailable', displayValue: pointVals.operStatus_Available ? 'Available' : 'Unavailable'},
+								{column: 'Status', value: pointVals.operStatus_Running.val ? 'Running' : 'Off', displayValue: pointVals.operStatus_Running.val ? 'Running' : 'Off', exclamation: pointVals.operStatus_Running.val && !pointVals.operStatus_Called.val ? true : false },
+								{column: 'Availability', value: pointVals.operStatus_Available.val ? 'Available' : 'Unavailable', displayValue: pointVals.operStatus_Available.val ? 'Available' : 'Unavailable'},
 								{column: 'Power', value: pointVals.operPower_kW.val, displayValue: JsUtils.formatValueToPrecision(pointVals.operPower_kW.val, pointVals.operPower_kW.precision || 0) + ' ' + pointVals.operPower_kW.units || 'kW'},
 								{column: 'Tons', value: pointVals.operPower_Tons.val, displayValue: JsUtils.formatValueToPrecision(pointVals.operPower_Tons.val, pointVals.operPower_Tons.precision || 0) + ' ' + pointVals.operPower_Tons.units || 'tR'},
 								{column: 'Efficiency', value: pointVals.operPowerEfficiency.val, displayValue: JsUtils.formatValueToPrecision(pointVals.operPowerEfficiency.val, pointVals.operPowerEfficiency.precision || 3) + ' ' + pointVals.operPowerEfficiency.units || 'kW/tR'},

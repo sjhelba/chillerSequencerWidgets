@@ -1,6 +1,6 @@
 
 class Meter {
-	constructor(elementToAppendMeterTo, elementToAppendTooltipTo, backgroundColor, foregroundBarColor, fontColor, height, width, title, units, precision, titleFont, unitsFont, numFont, meterVal, minVal, maxVal, hasTooltip, designVal) {
+	constructor(elementToAppendMeterTo, elementToAppendTooltipTo, backgroundColor, foregroundBarColor, fontColor, height, width, title, units, precision, titleFont, unitsFont, numFont, meterVal, minVal, maxVal, hasTooltip, designVal, isCurrentlyHovered) {
 		this.backgroundColor = backgroundColor;
 		this.foregroundBarColor = foregroundBarColor;
 		this.height = height;
@@ -19,7 +19,8 @@ class Meter {
 		this.horizontalTextPadding = 3;
 		this.verticalTextPadding = 2;
 		this.backgroundBarColor = '#e0ebeb';
-    this.textColor = fontColor;
+		this.textColor = fontColor;
+		this.isCurrentlyHovered = isCurrentlyHovered;
     this.previousMeterVal = this.meterVal;
 		this.calculateCalculatedProps();
 		this.hasTooltip = hasTooltip;
@@ -42,9 +43,7 @@ class Meter {
 		if (this.hasTooltip) {
 			const myTooltip = this.tooltip;
 			myTooltip.create(areNewArgs);
-			this.element
-				.on('mouseover', () => myTooltip.show())
-				.on('mouseout', () => myTooltip.hide());
+			if (this.isCurrentlyHovered) myTooltip.show();
 		}
 
 		const barGroup = this.element.append('g')
@@ -139,6 +138,23 @@ class Meter {
     this.element.remove();
   }
 
+	callbackOnHover(func) {
+		const myTooltip = this.tooltip;
+		const hasTooltip = this.hasTooltip;
+		this.element.on('mouseover', function() {
+			if (hasTooltip) myTooltip.show();
+			func();
+		})
+	}
+
+	callbackOnUnhover(func) {
+		const myTooltip = this.tooltip;
+		const hasTooltip = this.hasTooltip;
+		this.element.on('mouseout', function() {
+			if (hasTooltip) myTooltip.hide();
+			func();
+		});
+	}
 
 	static getHeightFromMeterHeight(meterHeight, titleFont, unitsFont, numFont) {
 		return meterHeight + d3.max([JsUtils.getTextHeight(titleFont), JsUtils.getTextHeight(unitsFont), JsUtils.getTextHeight(numFont)]) + 6 + 2;
@@ -147,24 +163,24 @@ class Meter {
   //  {paramName: newArg, paramName: newArg, paramName: newArg}
   redrawWithNewArgs(newArgsObj) {
 		const that = this;
-		if (this.hasTooltip) {
-			JsUtils.resetElements(that.tooltip.element, '*');
+			if (this.hasTooltip) {
+				JsUtils.resetElements(that.tooltip.element, '*');
+			}
+			JsUtils.resetElements(that.element, '*');
+			that.previousMeterVal = that.meterVal;
+			let count = 0;
+			for (let param in newArgsObj) {
+				if (newArgsObj.hasOwnProperty(param)) {
+					that[param] = newArgsObj[param];
+					count++;
+				}
+			}
+			// if more than one property has changed (thus properties other than meterVal have changed), don't use previous value
+			if (count > 1) {
+				that.previousMeterVal = that.meterVal
+			}
+			that.calculateCalculatedProps();
+			that.create(true);
 		}
-    JsUtils.resetElements(that.element, '*');
-    that.previousMeterVal = that.meterVal;
-    let count = 0;
-    for (let param in newArgsObj) {
-      if (newArgsObj.hasOwnProperty(param)) {
-        that[param] = newArgsObj[param];
-        count++;
-      }
-    }
-    // if more than one property has changed (thus properties other than meterVal have changed), don't use previous value
-    if (count > 1) {
-      that.previousMeterVal = that.meterVal
-    }
-    that.calculateCalculatedProps();
-    that.create(true);
-  }
 
 }
