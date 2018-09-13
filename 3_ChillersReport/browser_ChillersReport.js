@@ -330,7 +330,7 @@ function defineFuncForTabSpacing () {
 				]);
 
 				data.unsortableTableData.push([
-					{column: 'Item', value: 7, displayValue: 'WWWWWWWWWWWWWWW'},	//15 char max including spaces
+					{column: 'Item', value: 7, displayValue: 'Chiller 888'},	//15 char max including spaces
 					{column: 'Status', value: 'Running', displayValue: 'Running', exclamation: false},
 					{column: 'Availability', value: 'Available', displayValue: 'Available'},
 					{column: 'Power', value: 5, displayValue: JsUtils.formatValueToPrecision(5, 0) + ' kW'},
@@ -444,9 +444,10 @@ function defineFuncForTabSpacing () {
 
 		// ********************************************* SIZING ETC ******************************************************* //
 		const tableWidth = 680;
-		const colWidth = (tableWidth / 6);
+		const scrollbarWidth = 15 //approximate, changes per browser
+		const colWidth = ((tableWidth - scrollbarWidth) / 6);
 		const firstColWidth = colWidth + 20;
-		const otherColWidth = (tableWidth - 20) / 6
+		const otherColWidth = ((tableWidth - scrollbarWidth) - 20) / 6
 
 		const tableHeight = data.graphicHeight;
 		const headerHeight = 30;
@@ -471,6 +472,7 @@ function defineFuncForTabSpacing () {
 		widget.graphicDiv.attr('transform', `translate(${margin}, ${margin})`);
 
 		const table = widget.graphicDiv.append('table')
+			.attr('class', 'table')
 			.style('background-color', 'white')
 			.style('width', tableWidth + 20 + 'px')
 			.style('border-collapse', 'collapse')
@@ -480,23 +482,28 @@ function defineFuncForTabSpacing () {
 	
 
 		const thead = table.append('thead')
+			.attr('class', 'thead')
 			.style('display', 'block')
 			.style('width', tableWidth + 'px')
 			.style('height', headerHeight + 'px')
-			.style('background-color', headerAndDetailsFill);
+			.style('background-color', 'white')
 
 		const tbody = table.append('tbody')
+			.attr('class', 'tbody')
 			.style('display', 'block')
 			.style('max-height', maxTbodyHeight + 'px')
-			.style('overflow-y', 'auto')	//or scroll	
+			.style('overflow-y', 'scroll')	//or scroll	
 			.style('width', tableWidth + 'px')
+			.style('table-layout', 'fixed')
+
 
 		// ********************************************* THEAD ******************************************************* //
 		const headerRow = thead.append('tr')
 			.style('height', headerHeight + 'px')
 			.style('color', 'white')
 			.style('position', 'absolute')
-			// .style('border-bottom', '2px solid black')
+			.style('width', tableWidth - scrollbarWidth)
+
 
 		const headerCols = headerRow.selectAll('th')
 			.data(columns.slice(0, -1))	//don't include Details
@@ -504,9 +511,12 @@ function defineFuncForTabSpacing () {
 				.html(d => d)
 				.style('position', 'absolute')
 				.style('width', (d, i) => i === 0 ? firstColWidth + 'px' : otherColWidth + 'px')
+				.style('height', headerHeight + 'px')
 				.style('font', fonts.headers)
 				.attr('class', d => `header ${d}Header`)
 				.style('left', (d, i) => i ? firstColWidth + ((i-1) * otherColWidth) + 'px' : '0px')
+				.style('padding-right', 0)
+				.style('padding-left', 0)
 				.on('click', function(d){
 					dataSort(d, widget);
 					drawTbody();
@@ -519,6 +529,8 @@ function defineFuncForTabSpacing () {
 			.attr('class', 'headerSVG')
 			.attr('height', headerHeight)
 			.attr('width', tableWidth)
+			.style('background-color', headerAndDetailsFill);
+
 
 		function drawHeaderArrows() {
 			JsUtils.resetElements(headerSVG, '.headerArrow')
@@ -562,9 +574,12 @@ function defineFuncForTabSpacing () {
 					.attr('class', function(d) {return `cell ${d.column}Cell row${this.parentNode.getAttribute('data-index')}Cell`}) 
 					.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
 					.style('width', (d, i) => i === 0 ? firstColWidth + 'px' : otherColWidth + 'px')
+					.style('padding-left', 0)
+					.style('padding-right', 0)
 					.style('height', rowHeight + 'px')
 					.style('vertical-align', 'top')
 					.style('overflow', 'hidden')
+
 
 			const cellDivs = cells.append('div')
 				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
@@ -572,14 +587,14 @@ function defineFuncForTabSpacing () {
 				.style('height', rowHeight + 'px')
 				.style('display', 'table-cell')
 				.style('vertical-align', 'middle')
+				.style('position', 'relative')
 				.html(d => d.displayValue)
 				.style('font', d => fonts[d.column])
 				.style('background-color', d => d.displayValue === 'Running' ? runningColor : d.displayValue === 'Unavailable' ? unavailableColor : 'none')
 				.style('color', d => d.displayValue === 'Running' || d.displayValue === 'Unavailable' ? 'white' : 'black')
 				.style('border-radius', '8px')
-				.style('position', 'relative')
-				.style('padding-left', '0px')
-				.style('padding-right', '0px')
+				.style('word-break', 'break-all')
+				.style('word-wrap', 'break-word')
 				.each(function(d, i) {
 					if (d.exclamation) d3.select(this).append('img')
 						.attr('src', exclamation)
@@ -595,10 +610,9 @@ function defineFuncForTabSpacing () {
 			const svgs = rows.append('svg')
 				.attr('class', function(d) {return `svg row${this.parentNode.getAttribute('data-index')}Svg`})
 				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
-				.style('width', tableWidth + 'px')
+				.style('width', tableWidth - scrollbarWidth + 'px')
 				.style('height', function () {return widget.openRows.has(this.parentNode.getAttribute('data-index')) ? openRowHeight + 'px' : rowHeight + 'px'})
-				.style('position', 'relative')
-				.style('margin-left', `-${tableWidth}px`)
+				.style('margin-left', `-${tableWidth - scrollbarWidth}px`)
 				.each(function() {
 					const rowIndex = +this.parentNode.getAttribute('data-index');
 					if (widget.openRows.has(rowIndex)) {
@@ -644,7 +658,7 @@ function defineFuncForTabSpacing () {
 					.attr('rx', 3)
 					.attr('ry', 3)
 					.attr('y', (rowHeight / 2) - (hoveredRectWidth / 2) )
-					.attr('x', detailsHorizontalMargin / 2)
+					.attr('x', 5)
 					.transition()
 						.duration(200)
 						.attr('height', hoveredRectHeight)
@@ -673,14 +687,14 @@ function defineFuncForTabSpacing () {
 			svgs.append('rect')
 				.attr('height', detailsHeight)
 				.attr('y', rowHeight + 4)
-				.attr('width', tableWidth)
+				.attr('width', tableWidth - scrollbarWidth)
 				.attr('fill', headerAndDetailsFill)
 
 
 			const detailsHorizontalMargin = 40;
 			const marginLeftOfDT = 15;
 			const DTWidth = JsUtils.getTextWidth('8.8 °F', fonts.detailsValue)
-			const meterWidth = (tableWidth - ( (detailsHorizontalMargin * 4) + (marginLeftOfDT * 2) + (DTWidth * 2) )) / 3;
+			const meterWidth = ((tableWidth - scrollbarWidth) - ( (detailsHorizontalMargin * 4) + (marginLeftOfDT * 2) + (DTWidth * 2) )) / 3;
 			const detailsVerticalMargin = 10;
 			const marginBelowDetailsValue = 2;
 			const detailsSectionTitleHeight = JsUtils.getTextHeight(fonts.detailsSectionTitle);
@@ -831,9 +845,6 @@ function defineFuncForTabSpacing () {
 		}
 
 		drawTbody();
-
-
-
 
 
 
