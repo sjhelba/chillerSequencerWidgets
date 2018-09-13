@@ -60,16 +60,16 @@ function defineFuncForTabSpacing () {
 	const operStatusPoints = ['Available', 'Running', 'Called'];	//34 - 36
 
 
-	const dataSort = (column, widget) => {
-		if (widget.currentSort.column === column) {
-			widget.currentSort.ascending = !widget.currentSort.ascending;
+	const dataSort = (column, currentSort, sortableTableData) => {
+		if (currentSort.column === column) {
+			currentSort.ascending = !currentSort.ascending;
 		} else {
-			widget.currentSort.column = column;
-			widget.currentSort.ascending = true;
+			currentSort.column = column;
+			currentSort.ascending = true;
 		}
 
-		widget.sortableTableData = widget.sortableTableData.sort((a, b) => {
-			if (widget.currentSort.ascending) {
+		sortableTableData = sortableTableData.sort((a, b) => {
+			if (currentSort.ascending) {
 				return a[columnIndeces[column]].value > b[columnIndeces[column]].value ? 1 : -1;
 			} else {
 				return b[columnIndeces[column]].value > a[columnIndeces[column]].value ? 1 : -1;
@@ -415,7 +415,7 @@ function defineFuncForTabSpacing () {
 		const calculateDefs = () => {
 			// GLOBALS PER INSTANCE
 			if (!widget.currentSort) widget.currentSort = { column: 'Item', ascending: true }; 
-			if (!widget.sortableTableData) widget.sortableTableData = data.unsortableTableData.map(chillers => chillers.map(chiller => Object.assign({}, chiller)));
+			if (!data.sortableTableData) data.sortableTableData = data.unsortableTableData.map(chillers => chillers.map(chiller => Object.assign({}, chiller)));
 			if (!widget.hoveredRowIndex) widget.hoveredRowIndex = 'none';
 			if (!widget.hoveredMeter) widget.hoveredMeter = 'none';
 			if (!widget.openRows) widget.openRows = new Set();
@@ -518,7 +518,7 @@ function defineFuncForTabSpacing () {
 				.style('padding-right', 0)
 				.style('padding-left', 0)
 				.on('click', function(d){
-					dataSort(d, widget);
+					dataSort(d, widget.currentSort, data.sortableTableData);
 					drawTbody();
 					drawHeaderArrows();
 				});
@@ -559,7 +559,7 @@ function defineFuncForTabSpacing () {
 			if (!tbody.empty()) tbody.selectAll('*').remove();
 
 			const rows = tbody.selectAll('.row')
-				.data(widget.sortableTableData)
+				.data(data.sortableTableData)
 				.enter().append('tr')
 					.attr('class', 'row')
 					.style('background-color', (d, i) => i%2 ? evenNumberRowFill : oddNumberRowFill)
@@ -605,6 +605,26 @@ function defineFuncForTabSpacing () {
 						.style('top', '0px')
 						.attr('x', 10)
 				})
+				.on('click', function() {
+					const rowIndex = +this.parentNode.getAttribute('data-index');
+					const isCurrentlyOpen = widget.openRows.has(rowIndex);
+					const thisRowCells = widget.graphicDiv.selectAll(`.row${rowIndex}Cell,.row${rowIndex}Svg`)
+					if (isCurrentlyOpen) {
+						thisRowCells.style('height', rowHeight + 'px');
+						d3.select(this).select('.triangle').remove()
+						widget.openRows.delete(rowIndex)
+					} else {
+						thisRowCells.style('height', openRowHeight + 'px');
+						d3.select(this).append('svg:image')
+							.attr('class', 'triangle')
+							.attr('xlink:href', triangle)
+							.attr('height', 10)
+							.attr('width', 10)
+							.attr('x', firstColWidth - 5)
+							.attr('y', rowHeight - 3)
+						widget.openRows.add(rowIndex)
+					}
+				})
 
 
 			const svgs = rows.append('svg')
@@ -613,6 +633,7 @@ function defineFuncForTabSpacing () {
 				.style('width', tableWidth - scrollbarWidth + 'px')
 				.style('height', function () {return widget.openRows.has(this.parentNode.getAttribute('data-index')) ? openRowHeight + 'px' : rowHeight + 'px'})
 				.style('margin-left', `-${tableWidth - scrollbarWidth}px`)
+				.style('z-index', 80)
 				.each(function() {
 					const rowIndex = +this.parentNode.getAttribute('data-index');
 					if (widget.openRows.has(rowIndex)) {
@@ -749,7 +770,7 @@ function defineFuncForTabSpacing () {
 				.attr('fill', 'white')
 				.text(function() {
 					const rowIndex = this.parentNode.getAttribute('data-index');
-					const chillerObject = widget.sortableTableData[rowIndex];
+					const chillerObject = data.sortableTableData[rowIndex];
 					return chillerObject[detailsColumnIndex].value.evaporator.dt.displayValue;
 				})
 			detailsCol3s.append('text')
@@ -763,7 +784,7 @@ function defineFuncForTabSpacing () {
 				.attr('fill', 'white')
 				.text(function() {
 					const rowIndex = this.parentNode.getAttribute('data-index');
-					const chillerObject = widget.sortableTableData[rowIndex];
+					const chillerObject = data.sortableTableData[rowIndex];
 					return chillerObject[detailsColumnIndex].value.condenser.dt.displayValue;
 				})
 			detailsCol5s.append('text')
@@ -781,7 +802,7 @@ function defineFuncForTabSpacing () {
 				.attr('transform', `translate(0, ${detailsVerticalMargin + detailsValueHeight + marginBelowDetailsValue + meterHeight + (detailsVerticalMargin * 3)})`)
 				.each(function() {
 					const chillerIndex = this.getAttribute('data-index')
-					arrayOfChillerDetails[chillerIndex] = widget.sortableTableData[chillerIndex][columnIndeces.Details].value;
+					arrayOfChillerDetails[chillerIndex] = data.sortableTableData[chillerIndex][columnIndeces.Details].value;
 				})
 
 			//Col 1s Meter
@@ -854,7 +875,7 @@ function defineFuncForTabSpacing () {
 
 
 
-
+console.log('data', data)
 
 
 
