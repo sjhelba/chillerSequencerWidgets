@@ -723,7 +723,6 @@ function defineFuncForTabSpacing () {
 			const detailsLabelHeight = JsUtils.getTextHeight(fonts.detailsLabel);
 			const meterHeight = (detailsHeight - ( (detailsVerticalMargin * 6) + detailsSectionTitleHeight )) / 4
 			const detailsColumnIndex = columnIndeces.Details;
-			// const tooltipHeight = detailsHeight - (detailsSectionTitleHeight + detailsValueHeight + marginBelowDetailsValue + meterHeight + (detailsVerticalMargin * 5))
 
 
 			const detailsCol1s = svgs.append('g')
