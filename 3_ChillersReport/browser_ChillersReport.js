@@ -460,6 +460,7 @@ function defineFuncForTabSpacing () {
 		const hoveredRectHeight = rowHeight * 0.8;
 		const hoveredRectWidth = JsUtils.getTextWidth('!', fonts.Item);
 		const arrowWidth = JsUtils.getTextWidth('^', fonts.headers)
+		const headerTextHeight = JsUtils.getTextHeight(fonts.headers)
 
 		// ********************************************* DRAW ******************************************************* //
 		widget.graphicDiv 
@@ -515,6 +516,7 @@ function defineFuncForTabSpacing () {
 				.style('font', fonts.headers)
 				.attr('class', d => `header ${d}Header`)
 				.style('left', (d, i) => i ? firstColWidth + ((i-1) * otherColWidth) + 'px' : '0px')
+				.style('top', (headerHeight / 2) - (headerTextHeight / 1.25) + 'px')
 				.style('padding-right', 0)
 				.style('padding-left', 0)
 				.on('click', function(d){
@@ -588,26 +590,55 @@ function defineFuncForTabSpacing () {
 				.style('width', (d, i) => (i === 0 ? firstColWidth : otherColWidth) + 'px')
 				.style('height', rowHeight + 'px')
 				.style('display', 'table-cell')
-				.style('vertical-align', 'middle')
 				.style('position', 'relative')
-				.style('top', '1px')
-				.html(d => d.displayValue)
-				.style('font', d => fonts[d.column])
+				.on('click', function() {
+					const rowIndex = +this.parentNode.getAttribute('data-index');
+					const isCurrentlyOpen = widget.openRows.has(rowIndex);
+					const thisRowCells = widget.graphicDiv.selectAll(`.row${rowIndex}Cell,.row${rowIndex}Svg`)
+					if (isCurrentlyOpen) {
+						thisRowCells.style('height', rowHeight + 'px');
+						d3.select(this).select('.triangle').remove()
+						widget.openRows.delete(rowIndex)
+					} else {
+						thisRowCells.style('height', openRowHeight + 'px');
+						d3.select(this).append('svg:image')
+							.attr('class', 'triangle')
+							.attr('xlink:href', triangle)
+							.attr('height', 10)
+							.attr('width', 10)
+							.attr('x', firstColWidth - 5)
+							.attr('y', rowHeight - 3)
+						widget.openRows.add(rowIndex)
+					}
+				})
+
+
+			const innerCellDivs = cellDivs.append('div')
+				.attr('class', function() {'innerCellDiv innerCellDiv' + this.parentNode.getAttribute('data-index') })
 				.style('background-color', d => d.displayValue === 'Running' ? runningColor : d.displayValue === 'Unavailable' ? unavailableColor : 'none')
 				.style('color', d => d.displayValue === 'Running' || d.displayValue === 'Unavailable' ? 'white' : 'black')
 				.style('border-radius', '8px')
 				.style('word-break', 'break-all')
 				.style('word-wrap', 'break-word')
-				.style('overflow', 'hidden')
+				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
+				.style('width', (d, i) => (i === 0 ? firstColWidth : otherColWidth) - 8 + 'px')	//start at (i === 0 ? firstColWidth : otherColWidth) + 'px'
+				.style('left', 4 + 'px')	//start at 0
+				.style('height', rowHeight - 6 + 'px')	// start at rowHeight
+				.style('display', 'table-cell')
+				.style('vertical-align', 'middle')
+				.style('position', 'relative')
+				.style('top', '5px')	//start at 2 to center based on rowHeight
+				.html(d => d.displayValue)
+				.style('font', d => fonts[d.column])
 				.each(function(d, i) {
 					if (d.exclamation) d3.select(this).append('img')
 						.attr('src', exclamation)
 						.attr('height', 15)
 						.attr('width', 15)
 						.style('position', 'absolute')
-						.style('right', '0px')
-						.style('top', '0px')
-						.attr('x', 10)
+						.style('right', '-3px')
+						.style('top', '-3px')
+						.attr('x', 10);
 				})
 				.on('click', function() {
 					const rowIndex = +this.parentNode.getAttribute('data-index');
@@ -631,13 +662,18 @@ function defineFuncForTabSpacing () {
 				})
 
 
+
+
+
+
+
 			const svgs = rows.append('svg')
 				.attr('class', function(d) {return `svg row${this.parentNode.getAttribute('data-index')}Svg`})
 				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
 				.style('width', tableWidth - scrollbarWidth + 'px')
 				.style('height', function () {return widget.openRows.has(this.parentNode.getAttribute('data-index')) ? openRowHeight + 'px' : rowHeight + 'px'})
 				.style('margin-left', `-${tableWidth - scrollbarWidth}px`)
-				// .attr('transform', 'translate(0,1)')
+				.attr('transform', 'translate(0,2)')
 				.each(function() {
 					const rowIndex = +this.parentNode.getAttribute('data-index');
 					if (widget.openRows.has(rowIndex)) {
