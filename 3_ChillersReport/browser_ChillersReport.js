@@ -452,7 +452,7 @@ function defineFuncForTabSpacing () {
 		const tableHeight = data.graphicHeight;
 		const headerHeight = 30;
 		const maxTbodyHeight = tableHeight - headerHeight;
-		const rowHeight = 25;
+		const rowHeight = maxTbodyHeight / 8;
 
 		const detailsHeight = 180;
 		const openRowHeight = detailsHeight + rowHeight;
@@ -561,11 +561,13 @@ function defineFuncForTabSpacing () {
 			const rows = tbody.selectAll('.row')
 				.data(data.sortableTableData)
 				.enter().append('tr')
-					.attr('class', 'row')
+					.attr('class', (d, i) => 'row row' + i)
 					.style('background-color', (d, i) => i%2 ? evenNumberRowFill : oddNumberRowFill)
 					.attr('data-index', (d, i) => i)
 					.on('mouseenter', hoverRow)
 					.on('mouseleave', unhoverRow)
+					.style('height', rowHeight + 'px')
+
 
 			
 			const cells = rows.selectAll('.cell')
@@ -574,20 +576,21 @@ function defineFuncForTabSpacing () {
 					.attr('class', function(d) {return `cell ${d.column}Cell row${this.parentNode.getAttribute('data-index')}Cell`}) 
 					.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
 					.style('width', (d, i) => i === 0 ? firstColWidth + 'px' : otherColWidth + 'px')
-					.style('padding-left', 0)
-					.style('padding-right', 0)
+					.style('padding', 0)
 					.style('height', rowHeight + 'px')
 					.style('vertical-align', 'top')
 					.style('overflow', 'hidden')
+					.style('display', 'table-cell')
 
 
 			const cellDivs = cells.append('div')
 				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
-				.style('width', (d, i) => i === 0 ? firstColWidth + 'px' : otherColWidth + 'px')
+				.style('width', (d, i) => (i === 0 ? firstColWidth : otherColWidth) + 'px')
 				.style('height', rowHeight + 'px')
 				.style('display', 'table-cell')
 				.style('vertical-align', 'middle')
 				.style('position', 'relative')
+				.style('top', '1px')
 				.html(d => d.displayValue)
 				.style('font', d => fonts[d.column])
 				.style('background-color', d => d.displayValue === 'Running' ? runningColor : d.displayValue === 'Unavailable' ? unavailableColor : 'none')
@@ -595,6 +598,7 @@ function defineFuncForTabSpacing () {
 				.style('border-radius', '8px')
 				.style('word-break', 'break-all')
 				.style('word-wrap', 'break-word')
+				.style('overflow', 'hidden')
 				.each(function(d, i) {
 					if (d.exclamation) d3.select(this).append('img')
 						.attr('src', exclamation)
@@ -633,7 +637,7 @@ function defineFuncForTabSpacing () {
 				.style('width', tableWidth - scrollbarWidth + 'px')
 				.style('height', function () {return widget.openRows.has(this.parentNode.getAttribute('data-index')) ? openRowHeight + 'px' : rowHeight + 'px'})
 				.style('margin-left', `-${tableWidth - scrollbarWidth}px`)
-				.style('z-index', 80)
+				// .attr('transform', 'translate(0,1)')
 				.each(function() {
 					const rowIndex = +this.parentNode.getAttribute('data-index');
 					if (widget.openRows.has(rowIndex)) {
