@@ -102,15 +102,15 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		data.chillersStdHrs; //100;
 
 		const batchResolve = new baja.BatchResolve([
-			'station:|slot:/tekWorx/Sequencing/ChillerSequencer/Points/Optimization/Enabled',
-			'station:|slot:/tekWorx/Sequencing/ChillerSequencer/Points/Optimization/SpecifiedLead',
-			'station:|slot:/tekWorx/Sequencing/ChillerSequencer/Points/Sequencing/OnReason',
+			'station:|slot:/tekWorx/Sequencers/ChillerSequencer/Points/Optimization/Enabled',
+			'station:|slot:/tekWorx/Sequencers/ChillerSequencer/Points/Optimization/SpecifiedLead',
+			'station:|slot:/tekWorx/Sequencers/ChillerSequencer/Points/Sequencing/OnReason',
 			'history:^Chillers_OptHrCy',
 			'history:^Chillers_StdHrCy'
 		]);
 
 		// GET DATA //
-		return widget.resolve(`station:|slot:/tekWorx/Sequencing/ChillerSequencer/Sequencer`)	
+		return widget.resolve(`station:|slot:/tekWorx/Sequencers/ChillerSequencer/Sequencer`)	
 			.then(sequencer => {
 				data.chillersAvailable = sequencer.get('available');
 				data.chillersNeeded = sequencer.get('needed');

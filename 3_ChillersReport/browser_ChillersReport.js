@@ -1,4 +1,4 @@
-/* global JsUtils */
+/* global JsUtils Meter */
 
 function defineFuncForTabSpacing () {
 
@@ -11,7 +11,7 @@ function defineFuncForTabSpacing () {
 
 	const arePrimitiveValsInObjsSame = (obj1, obj2) => !Object.keys(obj1).some(key => (obj1[key] === null || (typeof obj1[key] !== 'object' && typeof obj1[key] !== 'function')) && obj1[key] !== obj2[key])
 	// 0 layers means obj only has primitive values
-	// this func only works with obj literals layered with obj literals until base layer only primitive
+	// this func only works with obj literals or arrays layered with obj literals or arrays until base layer only primitive
 	const checkNestedObjectsEquivalence = (objA, objB, layers) => {
 		if (layers === 0) {
 			return arePrimitiveValsInObjsSame(objA, objB);
@@ -19,9 +19,7 @@ function defineFuncForTabSpacing () {
 			const objAKeys = Object.keys(objA);
 			const objBKeys = Object.keys(objB);
 			if (objAKeys.length !== objBKeys.length) return false;
-			const somethingIsNotEquivalent = objAKeys.some(key => {
-				return !checkNestedObjectsEquivalence(objA[key], objB[key], layers - 1);
-			})
+			const somethingIsNotEquivalent = objAKeys.some(key => !checkNestedObjectsEquivalence(objA[key], objB[key], layers - 1));
 			return !somethingIsNotEquivalent;
 		}
 	};
@@ -29,13 +27,9 @@ function defineFuncForTabSpacing () {
 		const lastData = widget.data;
 		// check primitives for equivalence
 		if (!arePrimitiveValsInObjsSame(lastData, newData)) return true;
-		// check nested objs for equivalence
-		const monthlyModulesAreSame = checkNestedObjectsEquivalence(lastData.monthlyModulesData, newData.monthlyModulesData, 3);
-		const monthlyOverallAreSame = checkNestedObjectsEquivalence(lastData.monthlyOverallData, newData.monthlyOverallData, 2);
-		const annualModulesAreSame = checkNestedObjectsEquivalence(lastData.annualModulesData, newData.annualModulesData, 2);
-		const annualOverallAreSame = checkNestedObjectsEquivalence(lastData.annualOverallData, newData.annualOverallData, 1);
-		if (!monthlyModulesAreSame || !monthlyOverallAreSame || !annualModulesAreSame || !annualOverallAreSame) return true;
-
+		// check nested arrays for equivalence
+		const monthlyModulesAreSame = checkNestedObjectsEquivalence(lastData.unsortedTableData, newData.unsortedTableData, 2);
+		if (!monthlyModulesAreSame) return true;
 		//return false if nothing prompted true
 		return false;
 	};
@@ -60,19 +54,21 @@ function defineFuncForTabSpacing () {
 	const operStatusPoints = ['Available', 'Running', 'Called'];	//34 - 36
 
 
-	const dataSort = (column, currentSort, sortableTableData) => {
-		if (currentSort.column === column) {
-			currentSort.ascending = !currentSort.ascending;
-		} else {
-			currentSort.column = column;
-			currentSort.ascending = true;
+	const dataSort = (currentSort, sortableTableData, newColumn) => {
+		if (newColumn) {
+			if (currentSort.column === newColumn) {
+				currentSort.ascending = !currentSort.ascending;
+			} else {
+				currentSort.column = newColumn;
+				currentSort.ascending = true;
+			}
 		}
 
 		sortableTableData = sortableTableData.sort((a, b) => {
 			if (currentSort.ascending) {
-				return a[columnIndeces[column]].value > b[columnIndeces[column]].value ? 1 : -1;
+				return a[columnIndeces[currentSort.column]].value > b[columnIndeces[currentSort.column]].value ? 1 : -1;
 			} else {
-				return b[columnIndeces[column]].value > a[columnIndeces[column]].value ? 1 : -1;
+				return b[columnIndeces[currentSort.column]].value > a[columnIndeces[currentSort.column]].value ? 1 : -1;
 			}
 		});
 	};
@@ -114,6 +110,11 @@ function defineFuncForTabSpacing () {
 		{
 			name: 'overrideDefaultUnitsWFacets',
 			value: false
+		},
+		{
+			name: 'backgroundColor',
+			value: 'white',
+			typeSpec: 'gx:Color'
 		}
 	];
 
@@ -138,7 +139,7 @@ function defineFuncForTabSpacing () {
 
 
 		// DATA TO POPULATE //
-		data.unsortableTableData = [];
+		data.unsortedTableData = [];
 
 
 		
@@ -147,7 +148,7 @@ function defineFuncForTabSpacing () {
 		const populateFakeData = () => {
 
 			// FAKE DATA
-				data.unsortableTableData.push([
+				data.unsortedTableData.push([
 					{column: 'Item', value: 0, displayValue: 'Chiller 1'},
 					{column: 'Status', value: 'Running', displayValue: 'Running', exclamation: false},
 					{column: 'Availability', value: 'Available', displayValue: 'Available'},
@@ -173,7 +174,7 @@ function defineFuncForTabSpacing () {
 					}}
 				]);
 
-				data.unsortableTableData.push([
+				data.unsortedTableData.push([
 					{column: 'Item', value: 1, displayValue: 'Chiller 2'},
 					{column: 'Status', value: 'Off', displayValue: 'Off', exclamation: false},
 					{column: 'Availability', value: 'Available', displayValue: 'Available'},
@@ -199,7 +200,7 @@ function defineFuncForTabSpacing () {
 					}}
 				]);
 
-				data.unsortableTableData.push([
+				data.unsortedTableData.push([
 					{column: 'Item', value: 2, displayValue: 'Chiller 3'},
 					{column: 'Status', value: 'Off', displayValue: 'Off', exclamation: false},
 					{column: 'Availability', value: 'Unavailable', displayValue: 'Unavailable'},
@@ -225,7 +226,7 @@ function defineFuncForTabSpacing () {
 					}}
 				]);
 
-				data.unsortableTableData.push([
+				data.unsortedTableData.push([
 					{column: 'Item', value: 3, displayValue: 'Chiller 4'},
 					{column: 'Status', value: 'Off', displayValue: 'Off', exclamation: false},
 					{column: 'Availability', value: 'Available', displayValue: 'Available'},
@@ -251,7 +252,7 @@ function defineFuncForTabSpacing () {
 					}}
 				]);
 
-				data.unsortableTableData.push([
+				data.unsortedTableData.push([
 					{column: 'Item', value: 4, displayValue: 'Chiller 5'},
 					{column: 'Status', value: 'Running', displayValue: 'Running', exclamation: true},
 					{column: 'Availability', value: 'Available', displayValue: 'Available'},
@@ -277,7 +278,7 @@ function defineFuncForTabSpacing () {
 					}}
 				]);
 
-				data.unsortableTableData.push([
+				data.unsortedTableData.push([
 					{column: 'Item', value: 5, displayValue: 'Chiller 6'},
 					{column: 'Status', value: 'Off', displayValue: 'Off', exclamation: false},
 					{column: 'Availability', value: 'Unavailable', displayValue: 'Unavailable'},
@@ -303,7 +304,7 @@ function defineFuncForTabSpacing () {
 					}}
 				]);
 
-				data.unsortableTableData.push([
+				data.unsortedTableData.push([
 					{column: 'Item', value: 6, displayValue: 'Chiller 7'},
 					{column: 'Status', value: 'Off', displayValue: 'Off', exclamation: false},
 					{column: 'Availability', value: 'Available', displayValue: 'Available'},
@@ -329,7 +330,7 @@ function defineFuncForTabSpacing () {
 					}}
 				]);
 
-				data.unsortableTableData.push([
+				data.unsortedTableData.push([
 					{column: 'Item', value: 7, displayValue: 'Chiller 888'},	//15 char max including spaces
 					{column: 'Status', value: 'Running', displayValue: 'Running', exclamation: false},
 					{column: 'Availability', value: 'Available', displayValue: 'Available'},
@@ -355,7 +356,7 @@ function defineFuncForTabSpacing () {
 					}}
 				]);
 
-				data.unsortableTableData.push([
+				data.unsortedTableData.push([
 					{column: 'Item', value: 8, displayValue: 'Chiller 9'},
 					{column: 'Status', value: 'Off', displayValue: 'Off', exclamation: false},
 					{column: 'Availability', value: 'Available', displayValue: 'Available'},
@@ -381,7 +382,7 @@ function defineFuncForTabSpacing () {
 					}}
 				]);
 
-				data.unsortableTableData.push([
+				data.unsortedTableData.push([
 					{column: 'Item', value: 9, displayValue: 'Chiller 10'},
 					{column: 'Status', value: 'Running', displayValue: 'Running', exclamation: false},
 					{column: 'Availability', value: 'Available', displayValue: 'Available'},
@@ -415,12 +416,12 @@ function defineFuncForTabSpacing () {
 		const calculateDefs = () => {
 			// GLOBALS PER INSTANCE
 			if (!widget.currentSort) widget.currentSort = { column: 'Item', ascending: true }; 
-			if (!data.sortableTableData) data.sortableTableData = data.unsortableTableData.map(chillers => chillers.map(chiller => Object.assign({}, chiller)));
 			if (!widget.hoveredRowIndex) widget.hoveredRowIndex = 'none';
 			if (!widget.hoveredMeter) widget.hoveredMeter = 'none';
 			if (!widget.openRows) widget.openRows = new Set();
-
-
+			
+			data.sortableTableData = data.unsortedTableData.map(chillers => chillers.map(chiller => Object.assign({}, chiller)));
+			dataSort(widget.currentSort, data.sortableTableData);
 			return data;
 		};
 
@@ -459,7 +460,6 @@ function defineFuncForTabSpacing () {
 
 		const hoveredRectHeight = rowHeight * 0.8;
 		const hoveredRectWidth = JsUtils.getTextWidth('!', fonts.Item);
-		const arrowWidth = JsUtils.getTextWidth('^', fonts.headers)
 		const headerTextHeight = JsUtils.getTextHeight(fonts.headers)
 
 		// ********************************************* DRAW ******************************************************* //
@@ -520,7 +520,7 @@ function defineFuncForTabSpacing () {
 				.style('padding-right', 0)
 				.style('padding-left', 0)
 				.on('click', function(d){
-					dataSort(d, widget.currentSort, data.sortableTableData);
+					dataSort(widget.currentSort, data.sortableTableData, d);
 					drawTbody();
 					drawHeaderArrows();
 				});

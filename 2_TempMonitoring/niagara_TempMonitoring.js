@@ -972,7 +972,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.style('overflow', 'hidden')
 
 		that.getSubscriber().attach('changed', function (prop, cx) { render(that) });
-		// setInterval(() => render(that), 7000)
+		setInterval(() => render(that), 10000)
 	};
 
 

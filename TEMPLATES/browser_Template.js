@@ -5,7 +5,7 @@ function defineFuncForTabSpacing () {
 	////////// Hard Coded Defs //////////
 	const arePrimitiveValsInObjsSame = (obj1, obj2) => !Object.keys(obj1).some(key => (obj1[key] === null || (typeof obj1[key] !== 'object' && typeof obj1[key] !== 'function')) && obj1[key] !== obj2[key])
 	// 0 layers means obj only has primitive values
-	// this func only works with obj literals layered with obj literals until base layer only primitive
+	// this func only works with obj literals or arrays layered with obj literals or arrays until base layer only primitive
 	const checkNestedObjectsEquivalence = (objA, objB, layers) => {
 		if (layers === 0) {
 			return arePrimitiveValsInObjsSame(objA, objB);
@@ -13,9 +13,7 @@ function defineFuncForTabSpacing () {
 			const objAKeys = Object.keys(objA);
 			const objBKeys = Object.keys(objB);
 			if (objAKeys.length !== objBKeys.length) return false;
-			const somethingIsNotEquivalent = objAKeys.some(key => {
-				return !checkNestedObjectsEquivalence(objA[key], objB[key], layers - 1);
-			})
+			const somethingIsNotEquivalent = objAKeys.some(key => !checkNestedObjectsEquivalence(objA[key], objB[key], layers - 1));
 			return !somethingIsNotEquivalent;
 		}
 	};
@@ -23,13 +21,9 @@ function defineFuncForTabSpacing () {
 		const lastData = widget.data;
 		// check primitives for equivalence
 		if (!arePrimitiveValsInObjsSame(lastData, newData)) return true;
-		// check nested objs for equivalence
-		const monthlyModulesAreSame = checkNestedObjectsEquivalence(lastData.monthlyModulesData, newData.monthlyModulesData, 3);
-		const monthlyOverallAreSame = checkNestedObjectsEquivalence(lastData.monthlyOverallData, newData.monthlyOverallData, 2);
-		const annualModulesAreSame = checkNestedObjectsEquivalence(lastData.annualModulesData, newData.annualModulesData, 2);
-		const annualOverallAreSame = checkNestedObjectsEquivalence(lastData.annualOverallData, newData.annualOverallData, 1);
-		if (!monthlyModulesAreSame || !monthlyOverallAreSame || !annualModulesAreSame || !annualOverallAreSame) return true;
-
+		// check nested arrays for equivalence
+		const monthlyModulesAreSame = checkNestedObjectsEquivalence(lastData.tableData, newData.tableData, 2);
+		if (!monthlyModulesAreSame) return true;
 		//return false if nothing prompted true
 		return false;
 	};
