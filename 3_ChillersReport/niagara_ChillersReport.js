@@ -210,23 +210,23 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 								{column: 'Item', value: chillerIndex, displayValue: chillerName},
 								{column: 'Status', value: pointVals.operStatus_Running.val ? 'Running' : 'Off', displayValue: pointVals.operStatus_Running.val ? 'Running' : 'Off', exclamation: pointVals.operStatus_Running.val && !pointVals.operStatus_Called.val ? true : false },
 								{column: 'Availability', value: pointVals.operStatus_Available.val ? 'Available' : 'Unavailable', displayValue: pointVals.operStatus_Available.val ? 'Available' : 'Unavailable'},
-								{column: 'Power', value: pointVals.operPower_kW.val, displayValue: JsUtils.formatValueToPrecision(pointVals.operPower_kW.val, pointVals.operPower_kW.precision || 0) + ' ' + pointVals.operPower_kW.units || 'kW'},
-								{column: 'Tons', value: pointVals.operPower_Tons.val, displayValue: JsUtils.formatValueToPrecision(pointVals.operPower_Tons.val, pointVals.operPower_Tons.precision || 0) + ' ' + pointVals.operPower_Tons.units || 'tR'},
-								{column: 'Efficiency', value: pointVals.operPowerEfficiency.val, displayValue: JsUtils.formatValueToPrecision(pointVals.operPowerEfficiency.val, pointVals.operPowerEfficiency.precision || 3) + ' ' + pointVals.operPowerEfficiency.units || 'kW/tR'},
+								{column: 'Power', value: pointVals.operPower_kW.val, displayValue: JsUtils.formatValueToPrecision(pointVals.operPower_kW.val, pointVals.operPower_kW.precision || 0) + ' ' + (pointVals.operPower_kW.units || 'kW')},
+								{column: 'Tons', value: pointVals.operPower_Tons.val, displayValue: JsUtils.formatValueToPrecision(pointVals.operPower_Tons.val, pointVals.operPower_Tons.precision || 0) + ' ' + (pointVals.operPower_Tons.units || 'tR')},
+								{column: 'Efficiency', value: pointVals.operPower_Efficiency.val, displayValue: JsUtils.formatValueToPrecision(pointVals.operPower_Efficiency.val, pointVals.operPower_Efficiency.precision || 3) + ' ' + (pointVals.operPower_Efficiency.units || 'kW/tR')},
 								{column: 'Details', value: {
 									evaporator: {
 										dp: {value: pointVals.operEvap_DP.val, min: pointVals.configEvap_MinimumDP.val, max: pointVals.configEvap_MaximumDP.val, design: pointVals.configEvap_DP.val, units: pointVals.configEvap_DP.units || 'psi', precision: pointVals.configEvap_DP.precision || 1},
 										flow: {value: pointVals.operEvap_Flow.val, min: pointVals.configEvap_MinimumFlow.val, max: pointVals.configEvap_MaximumFlow.val, design: pointVals.configEvap_Flow.val, units: pointVals.configEvap_Flow.units || 'gpm', precision: pointVals.configEvap_Flow.precision || 0},
 										lwt: {value: pointVals.operEvap_LWT.val, min: pointVals.configEvap_MinimumLWT.val, max: pointVals.configEvap_MaximumLWT.val, design: pointVals.configEvap_LWT.val, units: pointVals.configEvap_LWT.units || '°F', precision: pointVals.configEvap_LWT.precision || 1},
-										ewt: {value: pointVals.operEvap_EWT.val, min: pointVals.configEvap_LWT.val, max: pointVals.configEvap_EWT + (pointVals.configEvap_MaximumLWT - pointVals.configEvap_LWT), design: pointVals.configEvap_EWT.val, units: pointVals.operEvap_EWT.units || '°F', precision: pointVals.operEvap_EWT.precision || 1},
-										dt: {value: pointVals.operEvap_DeltaT.val, displayValue: JsUtils.formatValueToPrecision(pointVals.operEvap_DeltaT.val, pointVals.operEvap_DeltaT.precision || 1) + ' ' + pointVals.operEvap_DeltaT.units || '°F'}
+										ewt: {value: pointVals.operEvap_EWT.val, min: pointVals.configEvap_LWT.val, max: pointVals.configEvap_EWT.val + (pointVals.configEvap_MaximumLWT.val - pointVals.configEvap_LWT.val), design: pointVals.configEvap_EWT.val, units: pointVals.operEvap_EWT.units || '°F', precision: pointVals.operEvap_EWT.precision || 1},
+										dt: {value: pointVals.operEvap_DeltaT.val, displayValue: JsUtils.formatValueToPrecision(pointVals.operEvap_DeltaT.val, pointVals.operEvap_DeltaT.precision || 1) + ' ' + (pointVals.operEvap_DeltaT.units || '°F')}
 									},
 									condenser: {
 										dp: {value: pointVals.operCond_DP.val, min: pointVals.configCond_MinimumDP.val, max: pointVals.configCond_MaximumDP.val, design: pointVals.configCond_DP.val, units: pointVals.operCond_DP.units || 'psi', precision: pointVals.operCond_DP.precision || 1},
 										flow: {value: pointVals.operCond_Flow.val, min: pointVals.configCond_MinimumFlow.val, max: pointVals.configCond_MaximumFlow.val, design: pointVals.configCond_Flow.val, units: pointVals.operCond_Flow.units || 'gpm', precision: pointVals.operCond_Flow.precision || 0},
 										ewt: {value: pointVals.operCond_EWT.val, min: pointVals.configCond_MinimumEWT.val, max: pointVals.configCond_MaximumEWT.val, design: pointVals.configCond_EWT.val, units: pointVals.operCond_EWT.units || '°F', precision: pointVals.operCond_EWT.precision || 1},
-										lwt: {value: pointVals.operCond_LWT.val, min: pointVals.configCond_EWT.val, max: pointVals.configCond_LWT - (pointVals.configCond_MaximumEWT - pointVals.configCond_EWT), design: pointVals.configCond_LWT.val, units: pointVals.operCond_LWT.units || '°F', precision: pointVals.operCond_LWT.precision || 1},
-										dt: {value: pointVals.operCond_DeltaT.val, displayValue: JsUtils.formatValueToPrecision(pointVals.operCond_DeltaT.val, pointVals.operCond_DeltaT.precision || 1) + ' ' + pointVals.operCond_DeltaT.units || '°F'}
+										lwt: {value: pointVals.operCond_LWT.val, min: pointVals.configCond_EWT.val, max: pointVals.configCond_LWT.val - (pointVals.configCond_MaximumEWT.val - pointVals.configCond_EWT.val), design: pointVals.configCond_LWT.val, units: pointVals.operCond_LWT.units || '°F', precision: pointVals.operCond_LWT.precision || 1},
+										dt: {value: pointVals.operCond_DeltaT.val, displayValue: JsUtils.formatValueToPrecision(pointVals.operCond_DeltaT.val, pointVals.operCond_DeltaT.precision || 1) + ' ' + (pointVals.operCond_DeltaT.units || '°F')}
 									},
 									status: {value: pointVals.operPower_PercentRLA.val, min: 0, max: 100, units: pointVals.operPower_PercentRLA.units || '%', precision: pointVals.operPower_PercentRLA.precision || 0}
 								}}
@@ -316,6 +316,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.style('overflow-y', 'scroll')	//or scroll	
 			.style('width', tableWidth + 'px')
 			.style('table-layout', 'fixed')
+			.style('top', '3px')
 
 
 		// ********************************************* THEAD ******************************************************* //
@@ -324,6 +325,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.style('color', 'white')
 			.style('position', 'absolute')
 			.style('width', tableWidth - scrollbarWidth)
+			.style('background-color', headerAndDetailsFill)
+
 
 
 		const headerCols = headerRow.selectAll('th')
@@ -337,8 +340,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				.attr('class', d => `header ${d}Header`)
 				.style('left', (d, i) => i ? firstColWidth + ((i-1) * otherColWidth) + 'px' : '0px')
 				.style('top', (headerHeight / 2) - (headerTextHeight / 1.25) + 'px')
-				.style('padding-right', 0)
-				.style('padding-left', 0)
+				.style('background', 'none')
+				.style('text-align', 'center')
+				.style('padding', 0)
 				.on('click', function(d){
 					dataSort(widget.currentSort, data.sortableTableData, d);
 					drawTbody();
@@ -678,10 +682,12 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 							col4Meters.callbackOnUnhover(() => widget.hoveredMeter = 'none')
 					})
 
+					widget.graphicDiv.selectAll('*').style('border', 'none')
+
+
 		}
 
 		drawTbody();
-
 
 
 	};
