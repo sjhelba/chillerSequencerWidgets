@@ -2,31 +2,6 @@ function defineFuncForTabSpacing () {
 
 	////////// Hard Coded Defs //////////
 	const timerData = ['timerType', 'timerOnReason', 'timerPreset', 'timerTimeLeft']
-	const getJSDateFromTimestamp = d3.timeParse('%d-%b-%y %I:%M:%S.%L %p UTC%Z');
-	const formatIntoPercentage = d3.format('.0%');
-	const formatValueToPrecision = (value, precision) => d3.format(',.' + precision + 'f')(value);
-	const getTextWidth = (text, font) => {
-		const canvas = document.createElement('canvas');
-		const context = canvas.getContext('2d');
-		context.font = font;
-		const width = context.measureText(text).width;
-		d3.select(canvas).remove()
-		return width;
-	};
-	const getTextHeight = font => {
-		let num = '';
-		const indexOfLastDigit = font.indexOf('pt') - 1;
-		for(let i = 0; i <= indexOfLastDigit; i++){
-			if(!isNaN(font[i]) || font[i] === '.') num += font[i];
-		}
-		num = +num;
-		return num * 1.33333333333;
-	};
-	const resetElements = (outerWidgetEl, elementsToReset) => {
-		const selectionForCheck = outerWidgetEl.selectAll(elementsToReset)
-		if (!selectionForCheck.empty()) selectionForCheck.remove();
-	};
-	
 	const removeTimerProps = key => !timerData.includes(key);
 	// check non-timer related values' primitives for equivalence
 	const arePrimitiveValsInObjsSame = (obj1, obj2) => !Object.keys(obj1).filter(removeTimerProps).some(key => (obj1[key] === null || (typeof obj1[key] !== 'object' && typeof obj1[key] !== 'function')) && obj1[key] !== obj2[key])
@@ -143,7 +118,7 @@ function defineFuncForTabSpacing () {
 
 		// CALCULATED DEFS //
 		const calculateDefs = () => {
-			data.percentOptHrs = formatIntoPercentage(data.chillersOptHrs / (data.chillersOptHrs + data.chillersStdHrs))
+			data.percentOptHrs = JsUtils.formatIntoPercentage(data.chillersOptHrs / (data.chillersOptHrs + data.chillersStdHrs))
 
 
 
@@ -174,13 +149,13 @@ function defineFuncForTabSpacing () {
 		const disabledCircleColor = 'gray'
 		const backgroundColor = 'white'
 
-		const titlesHeight = getTextHeight(titlesFont);
-		const valuesHeight = getTextHeight(valuesFont);
-		const labelsHeight = getTextHeight(labelsFont);
-		const optimizationWidth = getTextWidth('Optimization', labelsFont);
-		const specifiedLeadWidth = getTextWidth('Specified Lead', labelsFont);
-		const availableWidth = getTextWidth('Available', labelsFont);
-		const runningWidth = getTextWidth('Running', labelsFont);
+		const titlesHeight = JsUtils.getTextHeight(titlesFont);
+		const valuesHeight = JsUtils.getTextHeight(valuesFont);
+		const labelsHeight = JsUtils.getTextHeight(labelsFont);
+		const optimizationWidth = JsUtils.getTextWidth('Optimization', labelsFont);
+		const specifiedLeadWidth = JsUtils.getTextWidth('Specified Lead', labelsFont);
+		const availableWidth = JsUtils.getTextWidth('Available', labelsFont);
+		const runningWidth = JsUtils.getTextWidth('Running', labelsFont);
 		const paddingUnderTitle = 15;
 		const paddingUnderValues = 0;
 		const paddingBetweenSections = 20;
@@ -221,7 +196,7 @@ function defineFuncForTabSpacing () {
 		d3.select(widget.svg.node().parentNode).style('background-color', backgroundColor);
 		
 		// delete leftover elements from versions previously rendered
-		if (!widget.svg.empty()) resetElements(widget.svg, '*');
+		if (!widget.svg.empty()) JsUtils.resetElements(widget.svg, '*');
 
 		// ********************************************* GRAPHIC GROUP ******************************************************* //
 
@@ -343,10 +318,10 @@ function defineFuncForTabSpacing () {
 		const tooltipMargin = 3;
 		const minRightOfLabel = 8;
 		const verticalPadding = 3;
-		const tooltipHeight = (tooltipMargin * 3) + ( getTextHeight(meter.titleFont) * 2 ) + verticalPadding;
-		const tooltipWidth = (tooltipMargin * 2) + getTextWidth('Opt Hrs:', meter.titleFont) + minRightOfLabel + meter.greatestNumWidth;
-		const meterLeftTextWidth = getTextWidth(data.percentOptHrs, meterNumFont) + meter.horizontalTextPadding;
-		const meterRightTextWidth = getTextWidth(meter.title, meterTitleFont);
+		const tooltipHeight = (tooltipMargin * 3) + ( JsUtils.getTextHeight(meter.titleFont) * 2 ) + verticalPadding;
+		const tooltipWidth = (tooltipMargin * 2) + JsUtils.getTextWidth('Opt Hrs:', meter.titleFont) + minRightOfLabel + meter.greatestNumWidth;
+		const meterLeftTextWidth = JsUtils.getTextWidth(data.percentOptHrs, meterNumFont) + meter.horizontalTextPadding;
+		const meterRightTextWidth = JsUtils.getTextWidth(meter.title, meterTitleFont);
 		const sumWidthsOnBar = tooltipWidth + meterLeftTextWidth + meterRightTextWidth;
 		const leftoverSpaceOnBar = meter.barLength - sumWidthsOnBar;
 		const tooltipGroup = meterGroup.append('g').attr('class', 'meterGroup').attr('transform', `translate(${meterLeftTextWidth + (leftoverSpaceOnBar / 2)}, ${(meter.margin + meter.greatestTextHeight) - tooltipHeight})`).style('display', 'none');
@@ -366,13 +341,13 @@ function defineFuncForTabSpacing () {
 
 		const row1 = textGroup.append('g')
 			.attr('class', 'labelsColumn')
-			.attr('transform', `translate(0, ${getTextHeight(meter.numFont)})`);
+			.attr('transform', `translate(0, ${JsUtils.getTextHeight(meter.numFont)})`);
 		const row2 = textGroup.append('g')
 			.attr('class', 'numsColumn')
-			.attr('transform', `translate(0, ${( getTextHeight(meter.numFont) * 2 ) + verticalPadding})`);
+			.attr('transform', `translate(0, ${( JsUtils.getTextHeight(meter.numFont) * 2 ) + verticalPadding})`);
 
 		const labelsColumnX = 0;
-		const numsColumnX = getTextWidth('Opt Hrs:', meter.titleFont) + minRightOfLabel;
+		const numsColumnX = JsUtils.getTextWidth('Opt Hrs:', meter.titleFont) + minRightOfLabel;
 
 		//Min Label
 		row1.append('text')
@@ -381,7 +356,7 @@ function defineFuncForTabSpacing () {
 			.attr('x', labelsColumnX);
 		//Min Val
 		row1.append('text')
-			.text(formatValueToPrecision(data.chillersOptHrs, 0))
+			.text(JsUtils.formatValueToPrecision(data.chillersOptHrs, 0))
 			.style('font', meter.numFont)
 			.attr('x', numsColumnX);
 
@@ -392,7 +367,7 @@ function defineFuncForTabSpacing () {
 			.attr('x', labelsColumnX);
 		//Max Val
 		row2.append('text')
-			.text(formatValueToPrecision(data.chillersStdHrs, 0))
+			.text(JsUtils.formatValueToPrecision(data.chillersStdHrs, 0))
 			.style('font', meter.numFont)
 			.attr('x', numsColumnX);
 

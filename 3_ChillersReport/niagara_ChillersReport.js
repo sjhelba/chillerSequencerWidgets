@@ -30,6 +30,12 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		// check nested arrays for equivalence
 		const monthlyModulesAreSame = checkNestedObjectsEquivalence(lastData.unsortedTableData, newData.unsortedTableData, 2);
 		if (!monthlyModulesAreSame) return true;
+		const areDetailsStatusesSame = checkNestedObjectsEquivalence(lastData.unsortedTableData.map(chiller => chiller[columnIndeces.Details].value.status), newData.unsortedTableData.map(chiller => chiller[columnIndeces.Details].value.status), 1);
+		if (!areDetailsStatusesSame) return true;
+		const areDetailsCondensersSame = checkNestedObjectsEquivalence(lastData.unsortedTableData.map(chiller => chiller[columnIndeces.Details].value.condenser), newData.unsortedTableData.map(chiller => chiller[columnIndeces.Details].value.condenser), 2);
+		if (!areDetailsCondensersSame) return true;
+		const areDetailsEvaporatorSame = checkNestedObjectsEquivalence(lastData.unsortedTableData.map(chiller => chiller[columnIndeces.Details].value.evaporator), newData.unsortedTableData.map(chiller => chiller[columnIndeces.Details].value.evaporator), 2);
+		if (!areDetailsEvaporatorSame) return true;
 		//return false if nothing prompted true
 		return false;
 	};
@@ -405,7 +411,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 					.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
 					.style('width', (d, i) => i === 0 ? firstColWidth + 'px' : otherColWidth + 'px')
 					.style('padding', 0)
-					.style('height', rowHeight + 'px')
+					.style('height', function () {return widget.openRows.has(+this.parentNode.getAttribute('data-index')) ? openRowHeight + 'px' : rowHeight + 'px'})
 					.style('vertical-align', 'top')
 					.style('overflow', 'hidden')
 					.style('display', 'table-cell')
@@ -461,7 +467,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				.attr('class', function(d) {return `svg row${this.parentNode.getAttribute('data-index')}Svg`})
 				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
 				.style('width', tableWidth - scrollbarWidth + 'px')
-				.style('height', function () {return widget.openRows.has(this.parentNode.getAttribute('data-index')) ? openRowHeight + 'px' : rowHeight + 'px'})
+				.style('height', function () {
+					return widget.openRows.has(+this.parentNode.getAttribute('data-index')) ? openRowHeight + 'px' : rowHeight + 'px'
+				})
 				.style('margin-left', `-${tableWidth - scrollbarWidth}px`)
 				.attr('transform', 'translate(0,2)')
 				.each(function() {
@@ -698,7 +706,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		return setupDefinitions(widget)
 			.then(data => {
 				if (force || !widget.data || needToRedrawWidget(widget, data)){
-					
 					renderWidget(widget, data);	
 				}
 				widget.data = data;

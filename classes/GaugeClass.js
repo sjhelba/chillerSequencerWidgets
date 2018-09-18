@@ -86,10 +86,10 @@ class Gauge {
     this.title1 = this.timeLeft === 0 ? '' : this.timeLeft <= 10 ? this.timeLeft + ' sec' : this.timerType;
     if (this.timerType === 'On' || this.timerType === 'Standby') {
       this.title1Y = -(this.verticalPadding / 2);
-      this.title2Y = (this.verticalPadding / 2) + getTextHeight(this.title2Font);
+      this.title2Y = (this.verticalPadding / 2) + JsUtils.getTextHeight(this.title2Font);
       this.foregroundArcColor = '#feb550';
     } else {
-      this.title1Y = getTextHeight(this.title1Font) / 2;
+      this.title1Y = JsUtils.getTextHeight(this.title1Font) / 2;
       this.foregroundArcColor = this.timerType === 'Off' ? '#425867' : this.timerType === 'COS' ? '#404040' : 'none';
     }
 
@@ -124,7 +124,7 @@ class Gauge {
   //  {paramName: newArg, paramName: newArg, paramName: newArg}
   redrawWithNewArgs(newArgsObj) {
     const that = this;
-    resetElements(that.element, '*');
+    JsUtils.resetElements(that.element, '*');
     that.previoustimeLeft = that.timeLeft;
     let count = 0;
     for (let param in newArgsObj) {

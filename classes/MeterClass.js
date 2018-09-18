@@ -78,7 +78,7 @@ class Meter {
 				.attr('width', this.barHeight * 0.4)
 				.attr('x', scaleValue(this.designVal, this.minVal, this.maxVal, this.barLength))
 				.attr('y', -(this.barHeight / 4))
-				.attr('fill', this.backgroundColor)
+				.attr('fill', '#f5f5f5')
 				.attr('stroke', 'none');
 		}
 		// invisible hoverable bar
@@ -163,6 +163,9 @@ class Meter {
   //  {paramName: newArg, paramName: newArg, paramName: newArg}
   redrawWithNewArgs(newArgsObj) {
 		const that = this;
+		console.log('METER: that.units prior to change', that.units)
+		console.log('METER: that.meterVal prior to change', that.meterVal)
+
 			if (this.hasTooltip) {
 				JsUtils.resetElements(that.tooltip.element, '*');
 			}
@@ -179,6 +182,8 @@ class Meter {
 			if (count > 1) {
 				that.previousMeterVal = that.meterVal
 			}
+			console.log('METER: that.units after change', that.units)
+			console.log('METER: that.meterVal after change', that.meterVal)
 			that.calculateCalculatedProps();
 			that.create(true);
 		}

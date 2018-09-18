@@ -443,449 +443,435 @@ function defineFuncForTabSpacing () {
 			.style('height', data.jqHeight + 'px')	//only for browser
 			.style('width', data.jqWidth + 'px')		//only for browser
 
-		// ********************************************* SIZING ETC ******************************************************* //
-		const tableWidth = 680;
-		const scrollbarWidth = 15 //approximate, changes per browser
-		const colWidth = ((tableWidth - scrollbarWidth) / 6);
-		const firstColWidth = colWidth + 20;
-		const otherColWidth = ((tableWidth - scrollbarWidth) - 20) / 6
-
-		const tableHeight = data.graphicHeight;
-		const headerHeight = 30;
-		const maxTbodyHeight = tableHeight - headerHeight;
-		const rowHeight = maxTbodyHeight / 8;
-
-		const detailsHeight = 180;
-		const openRowHeight = detailsHeight + rowHeight;
-
-		const hoveredRectHeight = rowHeight * 0.8;
-		const hoveredRectWidth = JsUtils.getTextWidth('!', fonts.Item);
-		const headerTextHeight = JsUtils.getTextHeight(fonts.headers)
-
-		// ********************************************* DRAW ******************************************************* //
-		widget.graphicDiv 
-			.attr('width', tableWidth + 'px')
-			.attr('height', tableHeight + 'px')
-		d3.select(widget.graphicDiv.node().parentNode).style('background-color', data.backgroundColor);
-		// delete leftover elements from versions previously rendered
-		if (!widget.graphicDiv.empty()) JsUtils.resetElements(widget.graphicDiv, '*');
-
-		widget.graphicDiv.attr('transform', `translate(${margin}, ${margin})`);
-
-		const table = widget.graphicDiv.append('table')
-			.attr('class', 'table')
-			.style('background-color', 'white')
-			.style('width', tableWidth + 20 + 'px')
-			.style('border-collapse', 'collapse')
-			.style('text-align', 'center')
-			.style('cursor', 'default')
-			.style('table-layout', 'fixed')
-	
-
-		const thead = table.append('thead')
-			.attr('class', 'thead')
-			.style('display', 'block')
-			.style('width', tableWidth + 'px')
-			.style('height', headerHeight + 'px')
-			.style('background-color', 'white')
-
-		const tbody = table.append('tbody')
-			.attr('class', 'tbody')
-			.style('display', 'block')
-			.style('max-height', maxTbodyHeight + 'px')
-			.style('overflow-y', 'scroll')	//or scroll	
-			.style('width', tableWidth + 'px')
-			.style('table-layout', 'fixed')
-
-
-		// ********************************************* THEAD ******************************************************* //
-		const headerRow = thead.append('tr')
-			.style('height', headerHeight + 'px')
-			.style('color', 'white')
-			.style('position', 'absolute')
-			.style('width', tableWidth - scrollbarWidth)
-
-
-		const headerCols = headerRow.selectAll('th')
-			.data(columns.slice(0, -1))	//don't include Details
-			.enter().append('th')
-				.html(d => d)
-				.style('position', 'absolute')
-				.style('width', (d, i) => i === 0 ? firstColWidth + 'px' : otherColWidth + 'px')
-				.style('height', headerHeight + 'px')
-				.style('font', fonts.headers)
-				.attr('class', d => `header ${d}Header`)
-				.style('left', (d, i) => i ? firstColWidth + ((i-1) * otherColWidth) + 'px' : '0px')
-				.style('top', (headerHeight / 2) - (headerTextHeight / 1.25) + 'px')
-				.style('padding-right', 0)
-				.style('padding-left', 0)
-				.on('click', function(d){
-					dataSort(widget.currentSort, data.sortableTableData, d);
-					drawTbody();
-					drawHeaderArrows();
-				});
-
-
-		const headerSVG = headerRow.append('svg')
-			.attr('position', 'absolute')
-			.attr('class', 'headerSVG')
-			.attr('height', headerHeight)
-			.attr('width', tableWidth)
-			.style('background-color', headerAndDetailsFill);
-
-
-		function drawHeaderArrows() {
-			JsUtils.resetElements(headerSVG, '.headerArrow')
-			headerSVG.selectAll('.headerArrows')
-				.data(columns.slice(0, -1))	//don't include Details
-				.enter().append('svg:image')
-					.attr('xlink:href', d => widget.currentSort.column === d ? (widget.currentSort.ascending ? downArrow : upArrow) : bothArrows)
-					.attr('class', 'headerArrow')
-					.attr('x', (d, i) => {
-						const dWidth = JsUtils.getTextWidth(d, fonts.headers);
-						const thisColWidth = i ? otherColWidth : firstColWidth;
-						const xFromThisColStart = ((thisColWidth / 2) - (dWidth / 2)) - 21;
-						if (i === 0) return xFromThisColStart;
-						return firstColWidth + ((i - 1) * otherColWidth) + xFromThisColStart;
-					})
-					.attr('y', (headerHeight / 2) - ((headerHeight / 2) / 2))
-					.attr('height', headerHeight / 2)
-					.attr('width', 12)
-		}
-		drawHeaderArrows();
-
-
-
-
-		// ********************************************* TBODY ******************************************************* //
-		const drawTbody = () => {
-			if (!tbody.empty()) tbody.selectAll('*').remove();
-
-			const rows = tbody.selectAll('.row')
-				.data(data.sortableTableData)
-				.enter().append('tr')
-					.attr('class', (d, i) => 'row row' + i)
-					.style('background-color', (d, i) => i%2 ? evenNumberRowFill : oddNumberRowFill)
-					.attr('data-index', (d, i) => i)
-					.on('mouseenter', hoverRow)
-					.on('mouseleave', unhoverRow)
-					.style('height', rowHeight + 'px')
-
-
-
-			
-			const cells = rows.selectAll('.cell')
-				.data(d => d.filter(obj => obj.column !== 'Details') )
-				.enter().append('td')
-					.attr('class', function(d) {return `cell ${d.column}Cell row${this.parentNode.getAttribute('data-index')}Cell`}) 
-					.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
-					.style('width', (d, i) => i === 0 ? firstColWidth + 'px' : otherColWidth + 'px')
-					.style('padding', 0)
-					.style('height', rowHeight + 'px')
-					.style('vertical-align', 'top')
-					.style('overflow', 'hidden')
-					.style('display', 'table-cell')
-					.on('click', function() {toggleRow(this)})
-
-
-
-			const cellDivs = cells.append('div')
-				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
-				.style('width', (d, i) => (i === 0 ? firstColWidth : otherColWidth) + 'px')
-				.style('height', rowHeight + 'px')
-				.style('display', 'table-cell')
-				.style('position', 'relative')
-				.on('click', function() {toggleRow(this)})
-
-
-			const innerCellDivs = cellDivs.append('div')
-				.attr('class', function() {'innerCellDiv innerCellDiv' + this.parentNode.getAttribute('data-index') })
-				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
-				.style('background-color', d => d.displayValue === 'Running' ? runningColor : d.displayValue === 'Unavailable' ? unavailableColor : 'none')
-				.style('color', d => d.displayValue === 'Running' || d.displayValue === 'Unavailable' ? 'white' : 'black')
-				.style('border-radius', '8px')
-				.style('word-break', 'break-all')
-				.style('word-wrap', 'break-word')
-				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
-				.style('width', (d, i) => (i === 0 ? firstColWidth : otherColWidth) - 8 + 'px')	//start at (i === 0 ? firstColWidth : otherColWidth) + 'px'
-				.style('left', 4 + 'px')	//start at 0
-				.style('height', rowHeight - 6 + 'px')	// start at rowHeight
-				.style('display', 'table-cell')
-				.style('vertical-align', 'middle')
-				.style('position', 'relative')
-				.style('top', '5px')	//start at 2 to center based on rowHeight
-				.html(d => d.displayValue)
-				.style('font', d => fonts[d.column])
-				.each(function(d, i) {
-					if (d.exclamation) d3.select(this).append('img')
-						.attr('src', exclamation)
-						.attr('height', 15)
-						.attr('width', 15)
-						.style('position', 'absolute')
-						.style('right', '-3px')
-						.style('top', '-3px')
-						.attr('x', 10)
-				})
-				.on('click', function() {toggleRow(this)})
-
-
-
-
-
-
-			const svgs = rows.append('svg')
-				.attr('class', function(d) {return `svg row${this.parentNode.getAttribute('data-index')}Svg`})
-				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
-				.style('width', tableWidth - scrollbarWidth + 'px')
-				.style('height', function () {return widget.openRows.has(this.parentNode.getAttribute('data-index')) ? openRowHeight + 'px' : rowHeight + 'px'})
-				.style('margin-left', `-${tableWidth - scrollbarWidth}px`)
-				.attr('transform', 'translate(0,2)')
-				.each(function() {
-					const rowIndex = +this.parentNode.getAttribute('data-index');
-					if (widget.openRows.has(rowIndex)) appendTriangle(rowIndex);
-				})
-				.on('click', function() {toggleRow(this)})
-
-
-			// hovered rects 
-			function hoverRow(d, i) {
-				widget.hoveredRowIndex = i;
-				widget.outerDiv.select(`.row${i}Svg`).append('rect')
-					.attr('class', 'hoveredRect')
-					.attr('height', hoveredRectWidth)
-					.attr('width', hoveredRectWidth)
-					.attr('fill', '#1dc1e4')
-					.attr('rx', 3)
-					.attr('ry', 3)
-					.attr('y', (rowHeight / 2) - (hoveredRectWidth / 2) )
-					.attr('x', 5)
-					.transition()
-						.duration(200)
-						.attr('height', hoveredRectHeight)
-						.attr('y', (rowHeight / 2) - (hoveredRectHeight / 2))
-			}
-			if (widget.hoveredRowIndex !== 'none') {
-				hoverRow(null, widget.hoveredRowIndex);
-			}
-
-			function unhoverRow() {
-				widget.hoveredRowIndex = 'none'
-				widget.outerDiv.selectAll('.hoveredRect')
-					.transition()
-						.duration(200)
-						.attr('height', hoveredRectWidth)
-						.attr('y', (rowHeight / 2) - (hoveredRectWidth / 2))
-						.remove();
-			}
-
-
-
-			function toggleRow(that){
-				const rowIndex = +that.getAttribute('data-index');
-				const isCurrentlyOpen = widget.openRows.has(rowIndex);
-				const thatRowCells = widget.graphicDiv.selectAll(`.row${rowIndex}Cell,.row${rowIndex}Svg`)
-				if (isCurrentlyOpen) {
-					thatRowCells.style('height', rowHeight + 'px');
-					d3.select(that).select('.triangle').remove()
-					widget.openRows.delete(rowIndex)
-				} else {
-					thatRowCells.style('height', openRowHeight + 'px');
-					appendTriangle(rowIndex);
-					widget.openRows.add(rowIndex)
-				}
-			}
-
-			function appendTriangle(rowIndex) {
-				widget.graphicDiv.select(`.row${rowIndex}Svg`).append('svg:image')
-					.attr('class', 'triangle')
-					.attr('xlink:href', triangle)
-					.attr('height', 10)
-					.attr('width', 20)
-					.attr('x', firstColWidth - 10)
-					.attr('y', rowHeight - 5)
-			}
-
-
-
-			// ********************************************* DETAILS ******************************************************* //
-			//details rect
-			svgs.append('rect')
-				.attr('height', detailsHeight)
-				.attr('y', rowHeight + 4)
-				.attr('width', tableWidth - scrollbarWidth)
-				.attr('fill', headerAndDetailsFill)
-
-
-			const detailsHorizontalMargin = 40;
-			const marginLeftOfDT = 15;
-			const DTWidth = JsUtils.getTextWidth('8.8 °F', fonts.detailsValue)
-			const meterWidth = ((tableWidth - scrollbarWidth) - ( (detailsHorizontalMargin * 4) + (marginLeftOfDT * 2) + (DTWidth * 2) )) / 3;
-			const detailsVerticalMargin = 10;
-			const marginBelowDetailsValue = 2;
-			const detailsSectionTitleHeight = JsUtils.getTextHeight(fonts.detailsSectionTitle);
-			const detailsValueHeight = JsUtils.getTextHeight(fonts.detailsValue);
-			const detailsLabelHeight = JsUtils.getTextHeight(fonts.detailsLabel);
-			const meterHeight = (detailsHeight - ( (detailsVerticalMargin * 6) + detailsSectionTitleHeight )) / 4
-			const detailsColumnIndex = columnIndeces.Details;
-
-
-			const detailsCol1s = svgs.append('g')
-				.attr('class', 'detailsCol1s')
-				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
-				.attr('transform', `translate(${detailsHorizontalMargin}, ${rowHeight + detailsSectionTitleHeight + detailsVerticalMargin})`)
-			const detailsCol2s = svgs.append('g')
-				.attr('class', 'detailsCol2s')
-				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
-				.attr('transform', `translate(${(detailsHorizontalMargin * 2) + meterWidth}, ${rowHeight + detailsSectionTitleHeight + detailsVerticalMargin})`)
-			const detailsCol3s = svgs.append('g')
-				.attr('class', 'detailsCol3s')
-				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
-				.attr('transform', `translate(${(detailsHorizontalMargin * 2) + (meterWidth * 2) + marginLeftOfDT}, ${rowHeight + detailsValueHeight + detailsSectionTitleHeight + (detailsVerticalMargin * 4) + detailsSectionTitleHeight + (detailsValueHeight * 3) + (marginBelowDetailsValue * 3) + meterHeight})`)
-			const detailsCol4s = svgs.append('g')
-				.attr('class', 'detailsCol4s')
-				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
-				.attr('transform', `translate(${(detailsHorizontalMargin * 3) + (meterWidth * 2) + marginLeftOfDT + DTWidth}, ${rowHeight + detailsSectionTitleHeight + detailsVerticalMargin})`)
-			const detailsCol5s = svgs.append('g')
-				.attr('class', 'detailsCol5s')
-				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
-				.attr('transform', `translate(${(detailsHorizontalMargin * 3) + (meterWidth * 3) + (marginLeftOfDT * 2) + DTWidth}, ${rowHeight + detailsValueHeight + detailsSectionTitleHeight + (detailsVerticalMargin * 4) + detailsSectionTitleHeight + (detailsValueHeight * 3) + (marginBelowDetailsValue * 3) + meterHeight})`)
-
-			//Section Titles
-			detailsCol1s.append('text')
-				.style('font', fonts.detailsSectionTitle)
-				.attr('fill', 'white')
-				.text('STATUS')
-
-			detailsCol2s.append('text')
-				.style('font', fonts.detailsSectionTitle)
-				.attr('fill', 'white')
-				.text('EVAPORATOR')
-
-			detailsCol4s.append('text')
-				.style('font', fonts.detailsSectionTitle)
-				.attr('fill', 'white')
-				.text('CONDENSER')
-
-			
-			//Delta Ts
-			detailsCol3s.append('text')
-				.style('font', fonts.detailsValue)
-				.attr('fill', 'white')
-				.text(function() {
-					const rowIndex = this.parentNode.getAttribute('data-index');
-					const chillerObject = data.sortableTableData[rowIndex];
-					return chillerObject[detailsColumnIndex].value.evaporator.dt.displayValue;
-				})
-			detailsCol3s.append('text')
-				.style('font', fonts.detailsLabel)
-				.attr('fill', 'white')
-				.attr('y', marginBelowDetailsValue + detailsLabelHeight)
-				.text('DT')
-
-			detailsCol5s.append('text')
-				.style('font', fonts.detailsValue)
-				.attr('fill', 'white')
-				.text(function() {
-					const rowIndex = this.parentNode.getAttribute('data-index');
-					const chillerObject = data.sortableTableData[rowIndex];
-					return chillerObject[detailsColumnIndex].value.condenser.dt.displayValue;
-				})
-			detailsCol5s.append('text')
-				.style('font', fonts.detailsLabel)
-				.attr('fill', 'white')
-				.attr('y', marginBelowDetailsValue + detailsLabelHeight)
-				.text('DT')
-
-
-			//Tooltip Location
-			const arrayOfChillerDetails = [];
-			const tooltipGroups = detailsCol1s.append('g')
-				.attr('class', function() {return `tooltipGroup tooltipGroup${this.parentNode.getAttribute('data-index')}`})
-				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
-				.attr('transform', `translate(0, ${detailsVerticalMargin + detailsValueHeight + marginBelowDetailsValue + meterHeight + (detailsVerticalMargin * 3)})`)
-				.each(function() {
-					const chillerIndex = this.getAttribute('data-index')
-					arrayOfChillerDetails[chillerIndex] = data.sortableTableData[chillerIndex][columnIndeces.Details].value;
-				})
-
-			//Col 1s Meter
-			const col1MetersGroups = detailsCol1s.append('g')
-				.attr('class', function() {return `meterGroup col1MeterGroup${this.parentNode.getAttribute('data-index')}`})
-				.attr('transform', `translate(0, ${detailsVerticalMargin})`)
-
-
-			arrayOfChillerDetails.forEach((chillerDetails, index) => {
-				const chillerStatus = chillerDetails.status;
-				const rlaMeter = new Meter(widget.graphicDiv.select('.col1MeterGroup' + index), widget.graphicDiv.select('.tooltipGroup' + index), meterBackgroundColor, rlaMeterColor, 'white', meterHeight, meterWidth, '%RLA', chillerStatus.units, chillerStatus.precision, fonts.detailsLabel, fonts.detailsValue, fonts.detailsValue, chillerStatus.value, chillerStatus.min, chillerStatus.max, true, null, widget.hoveredMeter === '.col1MeterGroup' + index);
-				rlaMeter.create();
-				rlaMeter.callbackOnHover(() => widget.hoveredMeter = '.col1MeterGroup' + index);
-				rlaMeter.callbackOnUnhover(() => widget.hoveredMeter = 'none')
-			})
-
-
-			//Col 2s Meters
-			const col2Groups = detailsCol2s.append('g')
-				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
-				.attr('transform', `translate(0, ${detailsVerticalMargin})`)
-			
-			const col2MetersGroups = col2Groups.selectAll('.col2MetersGroups')
-				.data(['Dp', 'Flow', 'Lwt', 'Ewt'])
-				.enter().append('g')
-					.attr('class', function(d) {return `meterGroup col2MeterGroup${this.parentNode.getAttribute('data-index') + d}`})
-					.attr('transform', (d, i) => `translate(0, ${(meterHeight * i) + (detailsVerticalMargin * i)})`)
-					.each(function(d, i) {
-							const index = this.parentNode.getAttribute('data-index');
-							const typeDetails = arrayOfChillerDetails[index].evaporator[d.toLowerCase()];
-							const col2Meters = new Meter(widget.graphicDiv.select('.col2MeterGroup' + index + d), widget.graphicDiv.select('.tooltipGroup' + index), meterBackgroundColor, i%2 ? evenEvapMeterColor : oddEvapMeterColor, 'white', meterHeight, meterWidth, d, typeDetails.units, typeDetails.precision, fonts.detailsLabel, fonts.detailsValue, fonts.detailsValue, typeDetails.value, typeDetails.min, typeDetails.max, true, typeDetails.design, widget.hoveredMeter === '.col2MeterGroup' + index + d);
-							col2Meters.create();
-							col2Meters.callbackOnHover(() => widget.hoveredMeter = '.col2MeterGroup' + index + d);
-							col2Meters.callbackOnUnhover(() => widget.hoveredMeter = 'none')
-					})
-
-
-			//Col 4s Meters
-			const col4Groups = detailsCol4s.append('g')
-				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
-				.attr('transform', `translate(0, ${detailsVerticalMargin})`)
-			
-			const col4MetersGroups = col4Groups.selectAll('.col4MetersGroups')
-				.data(['Dp', 'Flow', 'Ewt', 'Lwt'])
-				.enter().append('g')
-					.attr('class', function(d) {return `meterGroup col4MeterGroup${this.parentNode.getAttribute('data-index') + d}`})
-					.attr('transform', (d, i) => `translate(0, ${(meterHeight * i) + (detailsVerticalMargin * i)})`)
-					.each(function(d, i) {
-							const index = this.parentNode.getAttribute('data-index');
-							const typeDetails = arrayOfChillerDetails[index].condenser[d.toLowerCase()];
-							const col4Meters = new Meter(widget.graphicDiv.select('.col4MeterGroup' + index + d), widget.graphicDiv.select('.tooltipGroup' + index), meterBackgroundColor, i%2 ? evenCondMeterColor : oddCondMeterColor, 'white', meterHeight, meterWidth, d, typeDetails.units, typeDetails.precision, fonts.detailsLabel, fonts.detailsValue, fonts.detailsValue, typeDetails.value, typeDetails.min, typeDetails.max, true, typeDetails.design, widget.hoveredMeter === '.col4MeterGroup' + index + d);
-							col4Meters.create();
-							col4Meters.callbackOnHover(() => widget.hoveredMeter = '.col4MeterGroup' + index + d);
-							col4Meters.callbackOnUnhover(() => widget.hoveredMeter = 'none')
-					})
-
-
-
-
-
-		}
-
-		drawTbody();
-
-
-
-
-
-
-
-
-
-console.log('data', data)
-
-
-
+				// ********************************************* SIZING ETC ******************************************************* //
+				const tableWidth = 680;
+				const scrollbarWidth = 15 //approximate, changes per browser
+				const colWidth = ((tableWidth - scrollbarWidth) / 6);
+				const firstColWidth = colWidth + 20;
+				const otherColWidth = ((tableWidth - scrollbarWidth) - 20) / 6
 		
-
-
-
+				const tableHeight = data.graphicHeight;
+				const headerHeight = 30;
+				const maxTbodyHeight = tableHeight - headerHeight;
+				const rowHeight = maxTbodyHeight / 8;
+		
+				const detailsHeight = 180;
+				const openRowHeight = detailsHeight + rowHeight;
+		
+				const hoveredRectHeight = rowHeight * 0.8;
+				const hoveredRectWidth = JsUtils.getTextWidth('!', fonts.Item);
+				const headerTextHeight = JsUtils.getTextHeight(fonts.headers)
+		
+				// ********************************************* DRAW ******************************************************* //
+				// delete leftover elements from versions previously rendered
+				widget.graphicDiv 
+					.attr('width', tableWidth + 'px')
+					.attr('height', tableHeight + 'px')
+				d3.select(widget.graphicDiv.node().parentNode).style('background-color', data.backgroundColor);
+				// delete leftover elements from versions previously rendered
+				if (!widget.graphicDiv.empty()) JsUtils.resetElements(widget.graphicDiv, '*');
+		
+				widget.graphicDiv.attr('transform', `translate(${margin}, ${margin})`);
+		
+				const table = widget.graphicDiv.append('table')
+					.attr('class', 'table')
+					.style('background-color', 'white')
+					.style('width', tableWidth + 20 + 'px')
+					.style('border-collapse', 'collapse')
+					.style('text-align', 'center')
+					.style('cursor', 'default')
+					.style('table-layout', 'fixed')
+		
+		
+				const thead = table.append('thead')
+					.attr('class', 'thead')
+					.style('display', 'block')
+					.style('width', tableWidth + 'px')
+					.style('height', headerHeight + 'px')
+					.style('background-color', 'white')
+		
+				const tbody = table.append('tbody')
+					.attr('class', 'tbody')
+					.style('display', 'block')
+					.style('max-height', maxTbodyHeight + 'px')
+					.style('overflow-y', 'scroll')	//or scroll	
+					.style('width', tableWidth + 'px')
+					.style('table-layout', 'fixed')
+					.style('top', '3px')
+		
+		
+				// ********************************************* THEAD ******************************************************* //
+				const headerRow = thead.append('tr')
+					.style('height', headerHeight + 'px')
+					.style('color', 'white')
+					.style('position', 'absolute')
+					.style('width', tableWidth - scrollbarWidth)
+					.style('background-color', headerAndDetailsFill)
+		
+		
+		
+				const headerCols = headerRow.selectAll('th')
+					.data(columns.slice(0, -1))	//don't include Details
+					.enter().append('th')
+						.html(d => d)
+						.style('position', 'absolute')
+						.style('width', (d, i) => i === 0 ? firstColWidth + 'px' : otherColWidth + 'px')
+						.style('height', headerHeight + 'px')
+						.style('font', fonts.headers)
+						.attr('class', d => `header ${d}Header`)
+						.style('left', (d, i) => i ? firstColWidth + ((i-1) * otherColWidth) + 'px' : '0px')
+						.style('top', (headerHeight / 2) - (headerTextHeight / 1.25) + 'px')
+						.style('background', 'none')
+						.style('text-align', 'center')
+						.style('padding', 0)
+						.on('click', function(d){
+							dataSort(widget.currentSort, data.sortableTableData, d);
+							drawTbody();
+							drawHeaderArrows();
+						});
+		
+		
+				const headerSVG = headerRow.append('svg')
+					.attr('position', 'absolute')
+					.attr('class', 'headerSVG')
+					.attr('height', headerHeight)
+					.attr('width', tableWidth)
+					.style('background-color', headerAndDetailsFill);
+		
+		
+				function drawHeaderArrows() {
+					JsUtils.resetElements(headerSVG, '.headerArrow')
+					headerSVG.selectAll('.headerArrows')
+						.data(columns.slice(0, -1))	//don't include Details
+						.enter().append('svg:image')
+							.attr('xlink:href', d => widget.currentSort.column === d ? (widget.currentSort.ascending ? downArrow : upArrow) : bothArrows)
+							.attr('class', 'headerArrow')
+							.attr('x', (d, i) => {
+								const dWidth = JsUtils.getTextWidth(d, fonts.headers);
+								const thisColWidth = i ? otherColWidth : firstColWidth;
+								const xFromThisColStart = ((thisColWidth / 2) - (dWidth / 2)) - 21;
+								if (i === 0) return xFromThisColStart;
+								return firstColWidth + ((i - 1) * otherColWidth) + xFromThisColStart;
+							})
+							.attr('y', (headerHeight / 2) - ((headerHeight / 2) / 2))
+							.attr('height', headerHeight / 2)
+							.attr('width', 12)
+				}
+				drawHeaderArrows();
+		
+		
+		
+		
+				// ********************************************* TBODY ******************************************************* //
+				const drawTbody = () => {
+					if (!tbody.empty()) tbody.selectAll('*').remove();
+		
+					const rows = tbody.selectAll('.row')
+						.data(data.sortableTableData)
+						.enter().append('tr')
+							.attr('class', (d, i) => 'row row' + i)
+							.style('background-color', (d, i) => i%2 ? evenNumberRowFill : oddNumberRowFill)
+							.attr('data-index', (d, i) => i)
+							.on('mouseenter', hoverRow)
+							.on('mouseleave', unhoverRow)
+							.style('height', rowHeight + 'px')
+		
+		
+		
+					
+					const cells = rows.selectAll('.cell')
+						.data(d => d.filter(obj => obj.column !== 'Details') )
+						.enter().append('td')
+							.attr('class', function(d) {return `cell ${d.column}Cell row${this.parentNode.getAttribute('data-index')}Cell`}) 
+							.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
+							.style('width', (d, i) => i === 0 ? firstColWidth + 'px' : otherColWidth + 'px')
+							.style('padding', 0)
+							.style('height', function () {return widget.openRows.has(+this.parentNode.getAttribute('data-index')) ? openRowHeight + 'px' : rowHeight + 'px'})
+							.style('vertical-align', 'top')
+							.style('overflow', 'hidden')
+							.style('display', 'table-cell')
+							.on('click', function() {toggleRow(this)})
+		
+		
+		
+					const cellDivs = cells.append('div')
+						.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
+						.style('width', (d, i) => (i === 0 ? firstColWidth : otherColWidth) + 'px')
+						.style('height', rowHeight + 'px')
+						.style('display', 'table-cell')
+						.style('position', 'relative')
+						.on('click', function() {toggleRow(this)})
+		
+		
+					const innerCellDivs = cellDivs.append('div')
+						.attr('class', function() {'innerCellDiv innerCellDiv' + this.parentNode.getAttribute('data-index') })
+						.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
+						.style('background-color', d => d.displayValue === 'Running' ? runningColor : d.displayValue === 'Unavailable' ? unavailableColor : 'none')
+						.style('color', d => d.displayValue === 'Running' || d.displayValue === 'Unavailable' ? 'white' : 'black')
+						.style('border-radius', '8px')
+						.style('word-break', 'break-all')
+						.style('word-wrap', 'break-word')
+						.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
+						.style('width', (d, i) => (i === 0 ? firstColWidth : otherColWidth) - 8 + 'px')	//start at (i === 0 ? firstColWidth : otherColWidth) + 'px'
+						.style('left', 4 + 'px')	//start at 0
+						.style('height', rowHeight - 6 + 'px')	// start at rowHeight
+						.style('display', 'table-cell')
+						.style('vertical-align', 'middle')
+						.style('position', 'relative')
+						.style('top', '5px')	//start at 2 to center based on rowHeight
+						.html(d => d.displayValue)
+						.style('font', d => fonts[d.column])
+						.each(function(d, i) {
+							if (d.exclamation) d3.select(this).append('img')
+								.attr('src', exclamation)
+								.attr('height', 15)
+								.attr('width', 15)
+								.style('position', 'absolute')
+								.style('right', '-3px')
+								.style('top', '-3px')
+								.attr('x', 10)
+						})
+						.on('click', function() {toggleRow(this)})
+		
+		
+		
+		
+		
+		
+					const svgs = rows.append('svg')
+						.attr('class', function(d) {return `svg row${this.parentNode.getAttribute('data-index')}Svg`})
+						.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
+						.style('width', tableWidth - scrollbarWidth + 'px')
+						.style('height', function () {
+							return widget.openRows.has(+this.parentNode.getAttribute('data-index')) ? openRowHeight + 'px' : rowHeight + 'px'
+						})
+						.style('margin-left', `-${tableWidth - scrollbarWidth}px`)
+						.attr('transform', 'translate(0,2)')
+						.each(function() {
+							const rowIndex = +this.parentNode.getAttribute('data-index');
+							if (widget.openRows.has(rowIndex)) appendTriangle(rowIndex);
+						})
+						.on('click', function() {toggleRow(this)})
+		
+		
+					// hovered rects 
+					function hoverRow(d, i) {
+						widget.hoveredRowIndex = i;
+						widget.outerDiv.select(`.row${i}Svg`).append('rect')
+							.attr('class', 'hoveredRect')
+							.attr('height', hoveredRectWidth)
+							.attr('width', hoveredRectWidth)
+							.attr('fill', '#1dc1e4')
+							.attr('rx', 3)
+							.attr('ry', 3)
+							.attr('y', (rowHeight / 2) - (hoveredRectWidth / 2) )
+							.attr('x', 5)
+							.transition()
+								.duration(200)
+								.attr('height', hoveredRectHeight)
+								.attr('y', (rowHeight / 2) - (hoveredRectHeight / 2))
+					}
+					if (widget.hoveredRowIndex !== 'none') {
+						hoverRow(null, widget.hoveredRowIndex);
+					}
+		
+					function unhoverRow() {
+						widget.hoveredRowIndex = 'none'
+						widget.outerDiv.selectAll('.hoveredRect')
+							.transition()
+								.duration(200)
+								.attr('height', hoveredRectWidth)
+								.attr('y', (rowHeight / 2) - (hoveredRectWidth / 2))
+								.remove();
+					}
+		
+		
+		
+					function toggleRow(that){
+						const rowIndex = +that.getAttribute('data-index');
+						const isCurrentlyOpen = widget.openRows.has(rowIndex);
+						const thatRowCells = widget.graphicDiv.selectAll(`.row${rowIndex}Cell,.row${rowIndex}Svg`)
+						if (isCurrentlyOpen) {
+							thatRowCells.style('height', rowHeight + 'px');
+							d3.select(that).select('.triangle').remove()
+							widget.openRows.delete(rowIndex)
+						} else {
+							thatRowCells.style('height', openRowHeight + 'px');
+							appendTriangle(rowIndex);
+							widget.openRows.add(rowIndex)
+						}
+					}
+		
+					function appendTriangle(rowIndex) {
+						widget.graphicDiv.select(`.row${rowIndex}Svg`).append('svg:image')
+							.attr('class', 'triangle')
+							.attr('xlink:href', triangle)
+							.attr('height', 10)
+							.attr('width', 20)
+							.attr('x', firstColWidth - 10)
+							.attr('y', rowHeight - 5)
+					}
+		
+		
+		
+					// ********************************************* DETAILS ******************************************************* //
+					//details rect
+					svgs.append('rect')
+						.attr('height', detailsHeight)
+						.attr('y', rowHeight + 4)
+						.attr('width', tableWidth - scrollbarWidth)
+						.attr('fill', headerAndDetailsFill)
+		
+		
+					const detailsHorizontalMargin = 40;
+					const marginLeftOfDT = 15;
+					const DTWidth = JsUtils.getTextWidth('8.8 °F', fonts.detailsValue)
+					const meterWidth = ((tableWidth - scrollbarWidth) - ( (detailsHorizontalMargin * 4) + (marginLeftOfDT * 2) + (DTWidth * 2) )) / 3;
+					const detailsVerticalMargin = 10;
+					const marginBelowDetailsValue = 2;
+					const detailsSectionTitleHeight = JsUtils.getTextHeight(fonts.detailsSectionTitle);
+					const detailsValueHeight = JsUtils.getTextHeight(fonts.detailsValue);
+					const detailsLabelHeight = JsUtils.getTextHeight(fonts.detailsLabel);
+					const meterHeight = (detailsHeight - ( (detailsVerticalMargin * 6) + detailsSectionTitleHeight )) / 4
+					const detailsColumnIndex = columnIndeces.Details;
+		
+		
+					const detailsCol1s = svgs.append('g')
+						.attr('class', 'detailsCol1s')
+						.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
+						.attr('transform', `translate(${detailsHorizontalMargin}, ${rowHeight + detailsSectionTitleHeight + detailsVerticalMargin})`)
+					const detailsCol2s = svgs.append('g')
+						.attr('class', 'detailsCol2s')
+						.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
+						.attr('transform', `translate(${(detailsHorizontalMargin * 2) + meterWidth}, ${rowHeight + detailsSectionTitleHeight + detailsVerticalMargin})`)
+					const detailsCol3s = svgs.append('g')
+						.attr('class', 'detailsCol3s')
+						.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
+						.attr('transform', `translate(${(detailsHorizontalMargin * 2) + (meterWidth * 2) + marginLeftOfDT}, ${rowHeight + detailsValueHeight + detailsSectionTitleHeight + (detailsVerticalMargin * 4) + detailsSectionTitleHeight + (detailsValueHeight * 3) + (marginBelowDetailsValue * 3) + meterHeight})`)
+					const detailsCol4s = svgs.append('g')
+						.attr('class', 'detailsCol4s')
+						.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
+						.attr('transform', `translate(${(detailsHorizontalMargin * 3) + (meterWidth * 2) + marginLeftOfDT + DTWidth}, ${rowHeight + detailsSectionTitleHeight + detailsVerticalMargin})`)
+					const detailsCol5s = svgs.append('g')
+						.attr('class', 'detailsCol5s')
+						.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
+						.attr('transform', `translate(${(detailsHorizontalMargin * 3) + (meterWidth * 3) + (marginLeftOfDT * 2) + DTWidth}, ${rowHeight + detailsValueHeight + detailsSectionTitleHeight + (detailsVerticalMargin * 4) + detailsSectionTitleHeight + (detailsValueHeight * 3) + (marginBelowDetailsValue * 3) + meterHeight})`)
+		
+					//Section Titles
+					detailsCol1s.append('text')
+						.style('font', fonts.detailsSectionTitle)
+						.attr('fill', 'white')
+						.text('STATUS')
+					detailsCol2s.append('text')
+						.style('font', fonts.detailsSectionTitle)
+						.attr('fill', 'white')
+						.text('EVAPORATOR')
+					detailsCol4s.append('text')
+						.style('font', fonts.detailsSectionTitle)
+						.attr('fill', 'white')
+						.text('CONDENSER')
+		
+					
+					//Delta Ts
+					detailsCol3s.append('text')
+						.style('font', fonts.detailsValue)
+						.attr('fill', 'white')
+						.text(function() {
+							const rowIndex = this.parentNode.getAttribute('data-index');
+							const chillerObject = data.sortableTableData[rowIndex];
+							return chillerObject[detailsColumnIndex].value.evaporator.dt.displayValue;
+						})
+					detailsCol3s.append('text')
+						.style('font', fonts.detailsLabel)
+						.attr('fill', 'white')
+						.attr('y', marginBelowDetailsValue + detailsLabelHeight)
+						.text('DT')
+		
+					detailsCol5s.append('text')
+						.style('font', fonts.detailsValue)
+						.attr('fill', 'white')
+						.text(function() {
+							const rowIndex = this.parentNode.getAttribute('data-index');
+							const chillerObject = data.sortableTableData[rowIndex];
+							return chillerObject[detailsColumnIndex].value.condenser.dt.displayValue;
+						})
+					detailsCol5s.append('text')
+						.style('font', fonts.detailsLabel)
+						.attr('fill', 'white')
+						.attr('y', marginBelowDetailsValue + detailsLabelHeight)
+						.text('DT')
+		
+		
+					//Tooltip Location
+					const arrayOfChillerDetails = [];
+					const tooltipGroups = detailsCol1s.append('g')
+						.attr('class', function() {return `tooltipGroup tooltipGroup${this.parentNode.getAttribute('data-index')}`})
+						.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
+						.attr('transform', `translate(0, ${detailsVerticalMargin + detailsValueHeight + marginBelowDetailsValue + meterHeight + (detailsVerticalMargin * 3)})`)
+						.each(function() {
+							const chillerIndex = this.getAttribute('data-index')
+							arrayOfChillerDetails[chillerIndex] = data.sortableTableData[chillerIndex][columnIndeces.Details].value;
+						})
+		
+		
+					//Col 1s Meter
+					const col1MetersGroups = detailsCol1s.append('g')
+						.attr('class', function() {return `meterGroup col1MeterGroup${this.parentNode.getAttribute('data-index')}`})
+						.attr('transform', `translate(0, ${detailsVerticalMargin})`)
+		
+					arrayOfChillerDetails.forEach((chillerDetails, index) => {
+						const chillerStatus = chillerDetails.status;
+						const rlaMeter = new Meter(widget.graphicDiv.select('.col1MeterGroup' + index), widget.graphicDiv.select('.tooltipGroup' + index), meterBackgroundColor, rlaMeterColor, 'white', meterHeight, meterWidth, '%RLA', chillerStatus.units, chillerStatus.precision, fonts.detailsLabel, fonts.detailsValue, fonts.detailsValue, chillerStatus.value, chillerStatus.min, chillerStatus.max, true, null, widget.hoveredMeter === '.col1MeterGroup' + index);
+						rlaMeter.create();
+						rlaMeter.callbackOnHover(() => widget.hoveredMeter = '.col1MeterGroup' + index);
+						rlaMeter.callbackOnUnhover(() => widget.hoveredMeter = 'none')
+					})
+		
+		
+					//Col 2s Meters
+					const col2Groups = detailsCol2s.append('g')
+						.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
+						.attr('transform', `translate(0, ${detailsVerticalMargin})`)
+					const col2MetersGroups = col2Groups.selectAll('.col2MetersGroups')
+						.data(['Dp', 'Flow', 'Lwt', 'Ewt'])
+						.enter().append('g')
+							.attr('class', function(d) {return `meterGroup col2MeterGroup${this.parentNode.getAttribute('data-index') + d}`})
+							.attr('transform', (d, i) => `translate(0, ${(meterHeight * i) + (detailsVerticalMargin * i)})`)
+							.each(function(d, i) {
+									const index = this.parentNode.getAttribute('data-index');
+									const typeDetails = arrayOfChillerDetails[index].evaporator[d.toLowerCase()];
+									const col2Meters = new Meter(widget.graphicDiv.select('.col2MeterGroup' + index + d), widget.graphicDiv.select('.tooltipGroup' + index), meterBackgroundColor, i%2 ? evenEvapMeterColor : oddEvapMeterColor, 'white', meterHeight, meterWidth, d, typeDetails.units, typeDetails.precision, fonts.detailsLabel, fonts.detailsValue, fonts.detailsValue, typeDetails.value, typeDetails.min, typeDetails.max, true, typeDetails.design, widget.hoveredMeter === '.col2MeterGroup' + index + d);
+									col2Meters.create();
+									col2Meters.callbackOnHover(() => widget.hoveredMeter = '.col2MeterGroup' + index + d);
+									col2Meters.callbackOnUnhover(() => widget.hoveredMeter = 'none')
+							})
+		
+		
+					//Col 4s Meters
+					const col4Groups = detailsCol4s.append('g')
+						.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
+						.attr('transform', `translate(0, ${detailsVerticalMargin})`)
+					const col4MetersGroups = col4Groups.selectAll('.col4MetersGroups')
+						.data(['Dp', 'Flow', 'Ewt', 'Lwt'])
+						.enter().append('g')
+							.attr('class', function(d) {return `meterGroup col4MeterGroup${this.parentNode.getAttribute('data-index') + d}`})
+							.attr('transform', (d, i) => `translate(0, ${(meterHeight * i) + (detailsVerticalMargin * i)})`)
+							.each(function(d, i) {
+									const index = this.parentNode.getAttribute('data-index');
+									const typeDetails = arrayOfChillerDetails[index].condenser[d.toLowerCase()];
+									const col4Meters = new Meter(widget.graphicDiv.select('.col4MeterGroup' + index + d), widget.graphicDiv.select('.tooltipGroup' + index), meterBackgroundColor, i%2 ? evenCondMeterColor : oddCondMeterColor, 'white', meterHeight, meterWidth, d, typeDetails.units, typeDetails.precision, fonts.detailsLabel, fonts.detailsValue, fonts.detailsValue, typeDetails.value, typeDetails.min, typeDetails.max, true, typeDetails.design, widget.hoveredMeter === '.col4MeterGroup' + index + d);
+									col4Meters.create();
+									col4Meters.callbackOnHover(() => widget.hoveredMeter = '.col4MeterGroup' + index + d);
+									col4Meters.callbackOnUnhover(() => widget.hoveredMeter = 'none')
+							})
+		
+							widget.graphicDiv.selectAll('*').style('border', 'none')
+		
+		
+				}
+		
+				drawTbody();
+		
 
 
 
