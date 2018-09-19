@@ -43,6 +43,11 @@ function defineFuncForTabSpacing () {
 		{
 			name: 'includeSpecifiedLead',
 			value: true
+		},
+		{
+			name: 'backgroundColor',
+			value: 'white',
+			typeSpec: 'gx:Color'
 		}
 	];
 
@@ -147,7 +152,6 @@ function defineFuncForTabSpacing () {
 		const labelsFont = '13.0pt Nirmala UI';	// Niagara: 16
 		const enabledCircleColor = '#22b573';
 		const disabledCircleColor = 'gray'
-		const backgroundColor = 'white'
 
 		const titlesHeight = JsUtils.getTextHeight(titlesFont);
 		const valuesHeight = JsUtils.getTextHeight(valuesFont);
@@ -193,7 +197,7 @@ function defineFuncForTabSpacing () {
 			.attr('height', data.jqHeight + 'px')
 			.attr('width', data.jqWidth + 'px')
 			
-		d3.select(widget.svg.node().parentNode).style('background-color', backgroundColor);
+		d3.select(widget.svg.node().parentNode).style('background-color', data.backgroundColor);
 		
 		// delete leftover elements from versions previously rendered
 		if (!widget.svg.empty()) JsUtils.resetElements(widget.svg, '*');
@@ -297,7 +301,7 @@ function defineFuncForTabSpacing () {
 		const meter = new Meter(
 			meterGroup,
 			meterGroup,
-			backgroundColor,
+			data.backgroundColor,
 			enabledCircleColor,
 			textColor,
 			meterObjHeight,

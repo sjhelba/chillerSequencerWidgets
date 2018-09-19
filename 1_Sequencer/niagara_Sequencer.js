@@ -53,6 +53,11 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			{
 				name: 'includeSpecifiedLead',
 				value: true
+			},
+			{
+				name: 'backgroundColor',
+				value: 'white',
+				typeSpec: 'gx:Color'
 			}
 		]);
 
@@ -108,6 +113,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			'history:^Chillers_OptHrCy',
 			'history:^Chillers_StdHrCy'
 		]);
+		const batchSubscriber = new baja.Subscriber();
 
 		// GET DATA //
 		return widget.resolve(`station:|slot:/tekWorx/Sequencers/ChillerSequencer/Sequencer`)	
@@ -133,7 +139,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				data.timerType = data.onTimerEnabled ? 'On' : data.offTimerEnabled ? 'Off' : data.cosTimerEnabled ? 'COS' : 'Standby';
 				data.timerPreset = data[data.timerType + 'TimerPreset'];
 				data.timerTimeLeft = data[data.timerType + 'TimerTimeLeft'];
-				return batchResolve.resolve();
+				return batchResolve.resolve({subscriber: batchSubscriber});
 			})
 			.then(() => {
 				const [enabled, lead, reason, optHrs, stdHrs] = batchResolve.getTargetObjects();
@@ -167,7 +173,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		const labelsFont = '13.0pt Nirmala UI';	// Niagara: 16	Browser: 13
 		const enabledCircleColor = '#22b573';
 		const disabledCircleColor = 'gray'
-		const backgroundColor = 'white'
 
 		const titlesHeight = getTextHeight(titlesFont);
 		const valuesHeight = getTextHeight(valuesFont);
@@ -199,7 +204,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 
 		// ********************************************* DRAW ******************************************************* //
-    d3.select(widget.svg.node().parentNode).style('background-color', backgroundColor);
+    d3.select(widget.svg.node().parentNode).style('background-color', data.backgroundColor);
 		// delete leftover elements from versions previously rendered
 		if (!widget.svg.empty()) resetElements(widget.svg, '*');
 
@@ -300,7 +305,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		const meter = new Meter(
 			meterGroup,
 			meterGroup,
-			backgroundColor,
+			data.backgroundColor,
 			enabledCircleColor,
 			textColor,
 			meterObjHeight,
