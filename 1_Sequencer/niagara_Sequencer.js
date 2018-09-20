@@ -45,7 +45,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 	// Define Widget Constructor & Exposed Properties
 ////////////////////////////////////////////////////////////////
 
-	var MyWidget = function () {
+	var ChillerSequencer = function () {
 		var that = this;
 		Widget.apply(this, arguments);
 
@@ -66,8 +66,8 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		subscriberMixIn(that);
 	};
 
-	MyWidget.prototype = Object.create(Widget.prototype);
-	MyWidget.prototype.constructor = MyWidget;
+	ChillerSequencer.prototype = Object.create(Widget.prototype);
+	ChillerSequencer.prototype.constructor = ChillerSequencer;
 
 
 
@@ -126,19 +126,22 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			})
 			.then(timers => {
 				timers.forEach(timer => {
-					timer.lease(500000);
+					// timer.attach('changed', function (prop, cx) {
+					// 	if (prop === SOMETHING) render(widget)
+					// });
+					timer.lease(80000)
 					const timerType = timer.getNavName();
 					const preset = timer.getPreset();
 					const accum = timer.getAccum();
 					const accumSeconds = accum.getSeconds();
-					const isEnabled = timer.getEnabled().getValue();
+					const isEnabled = timerType === 'cosTimer' ? timer.getDone() : timer.getEnabled().getValue();	//if cosTimer, runs if Done is true, rather than Enabled
 					data[timerType + 'Enabled'] = isEnabled;
 					data[timerType + 'Preset'] = preset.getSeconds();
 					data[timerType + 'TimeLeft'] = timerType === 'cosTimer' ? accumSeconds : data[timerType + 'Preset'] - accumSeconds
 				});
 				data.timerType = data.onTimerEnabled ? 'On' : data.offTimerEnabled ? 'Off' : data.cosTimerEnabled ? 'COS' : 'Standby';
-				data.timerPreset = data[data.timerType + 'TimerPreset'];
-				data.timerTimeLeft = data[data.timerType + 'TimerTimeLeft'];
+				data.timerPreset = data[data.timerType.toLowerCase() + 'TimerPreset'];
+				data.timerTimeLeft = data[data.timerType.toLowerCase() + 'TimerTimeLeft'];
 				return batchResolve.resolve({subscriber: batchSubscriber});
 			})
 			.then(() => {
@@ -167,7 +170,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 	const renderWidget = (widget, data) => {
 		//variables
-		const textColor = 'black';
+		const textColor = '#404040';
 		const titlesFont = 'bold 13.0pt Nirmala UI';	// Niagara: 18	Browser: 13
 		const valuesFont = 'bold 15.0pt Nirmala UI';	// Niagara: 28	Browser: 15
 		const labelsFont = '13.0pt Nirmala UI';	// Niagara: 16	Browser: 13
@@ -388,10 +391,9 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 
 
-    
-    
+		widget.svg.selectAll('text').attr('fill', textColor)
 
-
+    
 
 
 
@@ -426,14 +428,14 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 	// Initialize Widget
 ////////////////////////////////////////////////////////////////
 
-	MyWidget.prototype.doInitialize = function (element) {
+	ChillerSequencer.prototype.doInitialize = function (element) {
 		var that = this;
-		element.addClass('MyWidgetOuter');
+		element.addClass('ChillerSequencerOuter');
 		const outerEl = d3.select(element[0])
 			.style('overflow', 'hidden')
 
 		that.svg = outerEl.append('svg')
-			.attr('class', 'MyWidget')
+			.attr('class', 'ChillerSequencer')
 			.style('overflow', 'hidden')
 			.attr('top', 0)
 			.attr('left', 0)
@@ -441,6 +443,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.attr('height', '100%');
 
 		that.getSubscriber().attach('changed', function (prop, cx) { render(that) });
+		that.interval = setInterval(() => render(that), 500)
 	};
 
 
@@ -448,19 +451,20 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 	// Extra Widget Methods
 ////////////////////////////////////////////////////////////////
 
-	MyWidget.prototype.doLayout = MyWidget.prototype.doChanged = MyWidget.prototype.doLoad = function () { render(this); };
+	ChillerSequencer.prototype.doLayout = ChillerSequencer.prototype.doChanged = ChillerSequencer.prototype.doLoad = function () { render(this); };
 
 	/* FOR FUTURE NOTE: 
-	MyWidget.prototype.doChanged = function (name, value) {
+	ChillerSequencer.prototype.doChanged = function (name, value) {
 		  if(name === 'value') valueChanged += 'prototypeMethod - ';
 		  render(this);
 	};
 	*/
 
-	MyWidget.prototype.doDestroy = function () {
-		this.jq().removeClass('MyWidgetOuter');
+	ChillerSequencer.prototype.doDestroy = function () {
+		clearInterval(this.interval);
+		this.jq().removeClass('ChillerSequencerOuter');
 	};
 
-	return MyWidget;
+	return ChillerSequencer;
 });
 

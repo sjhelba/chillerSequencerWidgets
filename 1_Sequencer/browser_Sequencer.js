@@ -79,15 +79,16 @@ function defineFuncForTabSpacing () {
 
 		// FAKE DATA //
 		const populateFakeData = () => {
-			data.onTimerEnabled = true;
+			data.onTimerEnabled = false;
 			data.offTimerEnabled = false;
-			data.cosTimerEnabled = false;
+			data.cosTimerEnabled = true;
 			data.optimizationEnabled = true;
 			data.specifiedLead = 'Auto';
 			data.timerType = data.onTimerEnabled ? 'On' : data.offTimerEnabled ? 'Off' : data.cosTimerEnabled ? 'COS' : 'Standby';
 			data.timerOnReason = 'Efficiency';
 			data.timerPreset = 15; 
-			data.timerTimeLeft = 15;
+			const accum = data.cosTimerEnabled ? 0 : 15;
+			data.timerTimeLeft = data.cosTimerEnabled ? data.timerPreset - accum : accum;
 			data.chillersAvailable = 4;
 			data.chillersNeeded = 3
 			data.chillersCalled = 2;
@@ -146,7 +147,7 @@ function defineFuncForTabSpacing () {
 
 	const renderWidget = (widget, data) => {
 		// Extra Definitions //
-		const textColor = 'black';
+		const textColor = '#404040';
 		const titlesFont = 'bold 13.0pt Nirmala UI';	// Niagara: 18
 		const valuesFont = 'bold 15.0pt Nirmala UI';	// Niagara: 28
 		const labelsFont = '13.0pt Nirmala UI';	// Niagara: 16
@@ -380,21 +381,13 @@ function defineFuncForTabSpacing () {
 		const meterElement = meter.create();
 		meterElement.on('mouseover', () => tooltipGroup.style('display', 'block')).on('mouseout', () => tooltipGroup.style('display', 'none'));
 
+		widget.svg.selectAll('text').attr('fill', textColor)
 	};
 	
 
 
 
-/*
-A. Does the circle next to Enabled change colors when not enabled? If so, to what?
-B. Does 'Enabled' change when false? If so, to what?
-C. Where is specified lead determined? What else would 'Auto' be besides Auto?
-D. Where do I get the numbers for available, needed, called, and running?
-gray
-disabled
-enum
-sequencer components/properties
-*/
+
 
 
 
@@ -408,6 +401,7 @@ sequencer components/properties
 	function render(widget, force) {
 		// invoking setupDefinitions, then returning value to renderWidget func
 		let theData = setupDefinitions(widget);
+		console.log('render running')
 		//if timer data has changed, change timer
 		if (widget.data) {
 			const newArgsObj = {};
@@ -446,6 +440,7 @@ sequencer components/properties
 			.style('overflow', 'hidden');
 
 		render(widget);
+		widget.interval = setInterval(() => render(widget), 2000)
 	}
 
 
