@@ -149,13 +149,15 @@ function defineFuncForTabSpacing () {
 		// Extra Definitions //
 		const textColor = '#404040';
 		const titlesFont = 'bold 13.0pt Nirmala UI';	// Niagara: 18
-		const valuesFont = 'bold 15.0pt Nirmala UI';	// Niagara: 28
-		const labelsFont = '13.0pt Nirmala UI';	// Niagara: 16
+		const stringValuesFont = 'bold 13.0pt Nirmala UI';	// Niagara: 28
+		const numValuesFont = 'bold 15.0pt Nirmala UI';	// Niagara: 28
+		const labelsFont = '12.0pt Nirmala UI';	// Niagara: 16
 		const enabledCircleColor = '#22b573';
 		const disabledCircleColor = 'gray'
 
 		const titlesHeight = JsUtils.getTextHeight(titlesFont);
-		const valuesHeight = JsUtils.getTextHeight(valuesFont);
+		const stringValuesHeight = JsUtils.getTextHeight(stringValuesFont);
+		const numValuesHeight = JsUtils.getTextHeight(numValuesFont);
 		const labelsHeight = JsUtils.getTextHeight(labelsFont);
 		const optimizationWidth = JsUtils.getTextWidth('Optimization', labelsFont);
 		const specifiedLeadWidth = JsUtils.getTextWidth('Specified Lead', labelsFont);
@@ -177,7 +179,7 @@ function defineFuncForTabSpacing () {
 		const meterUnitsFont = 'bold 10.0pt Nirmala UI';
 		const meterNumFont = 'bold 10.0pt Nirmala UI';
 		const meterWidth = data.graphicWidth * 0.85
-		const meterHeight = 15;
+		const meterHeight = 12;
 		const meterObjHeight = Meter.getHeightFromMeterHeight(meterHeight, meterTitleFont, meterUnitsFont, meterNumFont);
 
 
@@ -218,7 +220,7 @@ function defineFuncForTabSpacing () {
 
 		const optimizationGroup = topGroup.append('g')
 			.attr('class', 'optimizationGroup')
-			.attr('transform', `translate(${additionalMarginsForNonTitles + circleDiameter + paddingRightOfCircle},${titlesHeight + paddingUnderTitle + valuesHeight})`);
+			.attr('transform', `translate(${additionalMarginsForNonTitles + circleDiameter + paddingRightOfCircle},${titlesHeight + paddingUnderTitle + stringValuesHeight})`);
 
 		optimizationGroup.append('circle')
 			.attr('fill', data.optimizationEnabled ? enabledCircleColor : disabledCircleColor)
@@ -229,7 +231,7 @@ function defineFuncForTabSpacing () {
 
 		optimizationGroup.append('text')
 			.text(data.optimizationEnabled ? 'Enabled' : 'Disabled')
-			.style('font', valuesFont)
+			.style('font', stringValuesFont)
 
 		optimizationGroup.append('text')
 			.text('Optimization')
@@ -239,11 +241,11 @@ function defineFuncForTabSpacing () {
 		if (data.includeSpecifiedLead) {
 			const specifiedLeadGroup = topGroup.append('g')
 				.attr('class', 'specifiedLeadGroup')
-				.attr('transform', `translate(${additionalMarginsForNonTitles + circleDiameter + paddingRightOfCircle + optimizationWidth + paddingBetweenTopColumns},${titlesHeight + paddingUnderTitle + valuesHeight})`);
+				.attr('transform', `translate(${additionalMarginsForNonTitles + circleDiameter + paddingRightOfCircle + optimizationWidth + paddingBetweenTopColumns},${titlesHeight + paddingUnderTitle + stringValuesHeight})`);
 	
 			specifiedLeadGroup.append('text')
 				.text(data.specifiedLead)
-				.style('font', valuesFont)
+				.style('font', stringValuesFont)
 	
 			specifiedLeadGroup.append('text')
 				.text('Specified Lead')
@@ -256,46 +258,46 @@ function defineFuncForTabSpacing () {
 
 		const bottomGroup = graphicGroup.append('g')
 			.attr('class', 'bottomGroup')
-			.attr('transform', `translate(0, ${titlesHeight + paddingUnderTitle + valuesHeight + paddingUnderValues + labelsHeight + paddingBetweenSections})`)
+			.attr('transform', `translate(0, ${titlesHeight + paddingUnderTitle + stringValuesHeight + paddingUnderValues + labelsHeight + paddingBetweenSections})`)
 
 		const timerSpot = bottomGroup.append('g').attr('class', 'timerSpot')
 		widget.timer = new Gauge(timerSpot, data.timerType, data.timerOnReason, data.timerPreset, data.timerTimeLeft);
 		widget.timer.create();
 
-		const col1 = bottomGroup.append('g').attr('class', 'col1').attr('transform', `translate(${150 /* gaugeWidth */ + paddingRightOfGauge},${paddingUnderTitle + valuesHeight})`)
+		const col1 = bottomGroup.append('g').attr('class', 'col1').attr('transform', `translate(${150 /* gaugeWidth */ + paddingRightOfGauge},${paddingUnderTitle + numValuesHeight})`)
 		col1.append('text')
 			.text(data.chillersRunning)
-			.style('font', valuesFont)
+			.style('font', numValuesFont)
 		col1.append('text')
 			.text('Running')
 			.style('font', labelsFont)
 			.attr('y', paddingUnderValues + labelsHeight)
 		col1.append('text')
 			.text(data.chillersCalled)
-			.style('font', valuesFont)
-			.attr('y', paddingUnderValues + labelsHeight + paddingBetweenRows + valuesHeight)
+			.style('font', numValuesFont)
+			.attr('y', paddingUnderValues + labelsHeight + paddingBetweenRows + numValuesHeight)
 		col1.append('text')
 			.text('Called')
 			.style('font', labelsFont)
-			.attr('y', ((paddingUnderValues + labelsHeight) * 2) + paddingBetweenRows + valuesHeight)
+			.attr('y', ((paddingUnderValues + labelsHeight) * 2) + paddingBetweenRows + numValuesHeight)
 
 
-		const col2 = bottomGroup.append('g').attr('class', 'col2').attr('transform', `translate(${150 /* gaugeWidth */ + paddingRightOfGauge + runningWidth + paddingBetweenBottomColumns},${paddingUnderTitle + valuesHeight})`)
+		const col2 = bottomGroup.append('g').attr('class', 'col2').attr('transform', `translate(${150 /* gaugeWidth */ + paddingRightOfGauge + runningWidth + paddingBetweenBottomColumns},${paddingUnderTitle + numValuesHeight})`)
 		col2.append('text')
 			.text(data.chillersAvailable)
-			.style('font', valuesFont)
+			.style('font', numValuesFont)
 		col2.append('text')
 			.text('Available')
 			.style('font', labelsFont)
 			.attr('y', paddingUnderValues + labelsHeight)
 		col2.append('text')
 			.text(data.chillersNeeded)
-			.style('font', valuesFont)
-			.attr('y', paddingUnderValues + labelsHeight + paddingBetweenRows + valuesHeight)
+			.style('font', numValuesFont)
+			.attr('y', paddingUnderValues + labelsHeight + paddingBetweenRows + numValuesHeight)
 		col2.append('text')
 			.text('Needed')
 			.style('font', labelsFont)
-			.attr('y', ((paddingUnderValues + labelsHeight) * 2) + paddingBetweenRows + valuesHeight)
+			.attr('y', ((paddingUnderValues + labelsHeight) * 2) + paddingBetweenRows + numValuesHeight)
 
 
 		const meterGroup = graphicGroup.append('g').attr('class', 'meterGroup').attr('transform', `translate(${(data.graphicWidth / 2) - (meterWidth / 2)},${data.graphicHeight - meterObjHeight})`)

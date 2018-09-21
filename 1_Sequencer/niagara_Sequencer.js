@@ -1,31 +1,8 @@
-define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3.min', 'baja!', 'nmodule/COREx/rc/jsClasses/Meter', 'nmodule/COREx/rc/jsClasses/Gauge'], function (Widget, subscriberMixIn, d3, baja, Meter, Gauge) {
+define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3.min', 'baja!', 'nmodule/COREx/rc/jsClasses/Meter', 'nmodule/COREx/rc/jsClasses/Gauge', 'nmodule/COREx/rc/jsClasses/JsUtils'], function (Widget, subscriberMixIn, d3, baja, Meter, Gauge, JsUtils) {
 	'use strict';
 
 ////////// Hard Coded Defs //////////
 	const timerData = ['timerType', 'timerOnReason', 'timerPreset', 'timerTimeLeft']
-	const formatIntoPercentage = d3.format('.0%');
-	const formatValueToPrecision = (value, precision) => d3.format(',.' + precision + 'f')(value);
-	const getTextWidth = (text, font) => {
-		const canvas = document.createElement('canvas');
-		const context = canvas.getContext('2d');
-		context.font = font;
-		const width = context.measureText(text).width;
-		d3.select(canvas).remove()
-		return width;
-	};
-	const getTextHeight = font => {
-		let num = '';
-		const indexOfLastDigit = font.indexOf('pt') - 1;
-		for (let i = 0; i <= indexOfLastDigit; i++){
-			if (!isNaN(font[i]) || font[i] === '.') num += font[i];
-		}
-		num = +num;
-		return num * 1.33333333333;
-	};
-	const resetElements = (outerWidgetEl, elementsToReset) => {
-		const selectionForCheck = outerWidgetEl.selectAll(elementsToReset)
-		if (!selectionForCheck.empty()) selectionForCheck.remove();
-	};
 	const removeTimerProps = key => !timerData.includes(key);
 	// check non-timer related values' primitives for equivalence
 	const arePrimitiveValsInObjsSame = (obj1, obj2) => !Object.keys(obj1).filter(removeTimerProps).some(key => (obj1[key] === null || (typeof obj1[key] !== 'object' && typeof obj1[key] !== 'function')) && obj1[key] !== obj2[key])
@@ -155,7 +132,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				])
 			})
 			.then(() => {
-				data.percentOptHrs = formatIntoPercentage(data.chillersOptHrs / (data.chillersOptHrs + data.chillersStdHrs))
+				data.percentOptHrs = JsUtils.formatIntoPercentage(data.chillersOptHrs / (data.chillersOptHrs + data.chillersStdHrs))
 				return data;
 			})
 			.catch(err => console.error('Error (Chiller Sequencer data error): ' + err));
@@ -169,140 +146,160 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 ////////////////////////////////////////////////////////////////
 
 	const renderWidget = (widget, data) => {
-		//variables
-		const textColor = '#404040';
-		const titlesFont = 'bold 13.0pt Nirmala UI';	// Niagara: 18	Browser: 13
-		const valuesFont = 'bold 15.0pt Nirmala UI';	// Niagara: 28	Browser: 15
-		const labelsFont = '13.0pt Nirmala UI';	// Niagara: 16	Browser: 13
-		const enabledCircleColor = '#22b573';
-		const disabledCircleColor = 'gray'
-
-		const titlesHeight = getTextHeight(titlesFont);
-		const valuesHeight = getTextHeight(valuesFont);
-		const labelsHeight = getTextHeight(labelsFont);
-		const optimizationWidth = getTextWidth('Optimization', labelsFont);
-		const specifiedLeadWidth = getTextWidth('Specified Lead', labelsFont);
-		const availableWidth = getTextWidth('Available', labelsFont);
-		const runningWidth = getTextWidth('Running', labelsFont);
-
-		const paddingUnderTitle = 15;
-		const paddingUnderValues = 0;
-		const paddingBetweenSections = 20;
-		const paddingBetweenRows = 10;
-		const paddingRightOfCircle = 3;
-		const paddingBetweenTopColumns = 30;
-		const paddingBetweenBottomColumns = 8;
-		const circleDiameter = 15;
-		const circleRadius = circleDiameter / 2;
-		const additionalMarginsForNonTitles = (data.graphicWidth - (optimizationWidth + specifiedLeadWidth + circleDiameter + paddingRightOfCircle + paddingBetweenTopColumns)) / 2;
-		const paddingRightOfGauge = data.graphicWidth - (additionalMarginsForNonTitles + 150 /* gaugeWidth */ + availableWidth + paddingBetweenBottomColumns + runningWidth);
-		/** METER */
-		const meterTitleFont = '10.0pt Nirmala UI';
-		const meterUnitsFont = 'bold 10.0pt Nirmala UI';
-		const meterNumFont = 'bold 10.0pt Nirmala UI';
-		const meterWidth = data.graphicWidth * 0.85
-		const meterHeight = 15;
-		const meterObjHeight = Meter.getHeightFromMeterHeight(meterHeight, meterTitleFont, meterUnitsFont, meterNumFont);
-
-
-
-		// ********************************************* DRAW ******************************************************* //
-    d3.select(widget.svg.node().parentNode).style('background-color', data.backgroundColor);
-		// delete leftover elements from versions previously rendered
-		if (!widget.svg.empty()) resetElements(widget.svg, '*');
-
-		const graphicGroup = widget.svg.append('g')
-			.attr('class', 'graphicGroup')
-			.attr('transform', `translate(${margin.left},${margin.top})`)
-			.attr('fill', textColor);
-
-		const topGroup = graphicGroup.append('g').attr('class', 'topGroup')
-		topGroup.append('text')
-			.text('Status')
-			.style('font', titlesFont)
-			.attr('y', titlesHeight);
-
-		const optimizationGroup = topGroup.append('g')
-			.attr('class', 'optimizationGroup')
-			.attr('transform', `translate(${additionalMarginsForNonTitles + circleDiameter + paddingRightOfCircle},${titlesHeight + paddingUnderTitle + valuesHeight})`);
-
-		optimizationGroup.append('circle')
-			.attr('fill', data.optimizationEnabled ? enabledCircleColor : disabledCircleColor)
-			.attr('stroke', 'none')
-			.attr('r', circleRadius)
-			.attr('cx', -(circleRadius + paddingRightOfCircle))
-			.attr('cy', -circleRadius)
-
-		optimizationGroup.append('text')
-			.text(data.optimizationEnabled ? 'Enabled' : 'Disabled')
-			.style('font', valuesFont)
-
-		optimizationGroup.append('text')
-			.text('Optimization')
-			.style('font', labelsFont)
-			.attr('y', paddingUnderValues + labelsHeight);
-
-		if (data.includeSpecifiedLead) {
-			const specifiedLeadGroup = topGroup.append('g')
-				.attr('class', 'specifiedLeadGroup')
-				.attr('transform', `translate(${additionalMarginsForNonTitles + circleDiameter + paddingRightOfCircle + optimizationWidth + paddingBetweenTopColumns},${titlesHeight + paddingUnderTitle + valuesHeight})`);
-
-			specifiedLeadGroup.append('text')
-				.text(data.specifiedLead)
-				.style('font', valuesFont)
-
-			specifiedLeadGroup.append('text')
-				.text('Specified Lead')
-				.style('font', labelsFont)
-				.attr('y', paddingUnderValues + labelsHeight);
-		}
-
-
-
-
-		const bottomGroup = graphicGroup.append('g')
-			.attr('class', 'bottomGroup')
-			.attr('transform', `translate(0, ${titlesHeight + paddingUnderTitle + valuesHeight + paddingUnderValues + labelsHeight + paddingBetweenSections})`)
-
-		const timerSpot = bottomGroup.append('g').attr('class', 'timerSpot')
-		widget.timer = new Gauge(timerSpot, data.timerType, data.timerOnReason, data.timerPreset, data.timerTimeLeft);
-		widget.timer.create();
-
-		const col1 = bottomGroup.append('g').attr('class', 'col1').attr('transform', `translate(${150 /* gaugeWidth */ + paddingRightOfGauge},${paddingUnderTitle + valuesHeight})`)
-		col1.append('text')
-			.text(data.chillersRunning)
-			.style('font', valuesFont)
-		col1.append('text')
-			.text('Running')
-			.style('font', labelsFont)
-			.attr('y', paddingUnderValues + labelsHeight)
-		col1.append('text')
-			.text(data.chillersCalled)
-			.style('font', valuesFont)
-			.attr('y', paddingUnderValues + labelsHeight + paddingBetweenRows + valuesHeight)
-		col1.append('text')
-			.text('Called')
-			.style('font', labelsFont)
-			.attr('y', ((paddingUnderValues + labelsHeight) * 2) + paddingBetweenRows + valuesHeight)
-
-
-		const col2 = bottomGroup.append('g').attr('class', 'col2').attr('transform', `translate(${150 /* gaugeWidth */ + paddingRightOfGauge + runningWidth + paddingBetweenBottomColumns},${paddingUnderTitle + valuesHeight})`)
-		col2.append('text')
-			.text(data.chillersAvailable)
-			.style('font', valuesFont)
-		col2.append('text')
-			.text('Available')
-			.style('font', labelsFont)
-			.attr('y', paddingUnderValues + labelsHeight)
-		col2.append('text')
-			.text(data.chillersNeeded)
-			.style('font', valuesFont)
-			.attr('y', paddingUnderValues + labelsHeight + paddingBetweenRows + valuesHeight)
-		col2.append('text')
-			.text('Needed')
-			.style('font', labelsFont)
-			.attr('y', ((paddingUnderValues + labelsHeight) * 2) + paddingBetweenRows + valuesHeight)
-
+				// Extra Definitions //
+				const textColor = '#404040';
+				const titlesFont = 'bold 13.0pt Nirmala UI';	// Niagara: 18
+				const stringValuesFont = 'bold 13.0pt Nirmala UI';	// Niagara: 28
+				const numValuesFont = 'bold 15.0pt Nirmala UI';	// Niagara: 28
+				const labelsFont = '12.0pt Nirmala UI';	// Niagara: 16
+				const enabledCircleColor = '#22b573';
+				const disabledCircleColor = 'gray'
+		
+				const titlesHeight = JsUtils.getTextHeight(titlesFont);
+				const stringValuesHeight = JsUtils.getTextHeight(stringValuesFont);
+				const numValuesHeight = JsUtils.getTextHeight(numValuesFont);
+				const labelsHeight = JsUtils.getTextHeight(labelsFont);
+				const optimizationWidth = JsUtils.getTextWidth('Optimization', labelsFont);
+				const specifiedLeadWidth = JsUtils.getTextWidth('Specified Lead', labelsFont);
+				const availableWidth = JsUtils.getTextWidth('Available', labelsFont);
+				const runningWidth = JsUtils.getTextWidth('Running', labelsFont);
+				const paddingUnderTitle = 15;
+				const paddingUnderValues = 0;
+				const paddingBetweenSections = 20;
+				const paddingBetweenRows = 10;
+				const circleDiameter = 15;
+				const circleRadius = circleDiameter / 2;
+				const paddingRightOfCircle = 3;
+				const paddingBetweenTopColumns = 30;
+				const paddingBetweenBottomColumns = 8;
+				const additionalMarginsForNonTitles = (data.graphicWidth - (optimizationWidth + specifiedLeadWidth + circleDiameter + paddingRightOfCircle + paddingBetweenTopColumns)) / 2;
+				const paddingRightOfGauge = data.graphicWidth - (additionalMarginsForNonTitles + 150 /* gaugeWidth */ + availableWidth + paddingBetweenBottomColumns + runningWidth);
+				/** METER */
+				const meterTitleFont = '10.0pt Nirmala UI';
+				const meterUnitsFont = 'bold 10.0pt Nirmala UI';
+				const meterNumFont = 'bold 10.0pt Nirmala UI';
+				const meterWidth = data.graphicWidth * 0.85
+				const meterHeight = 12;
+				const meterObjHeight = Meter.getHeightFromMeterHeight(meterHeight, meterTitleFont, meterUnitsFont, meterNumFont);
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+				// ********************************************* DRAW ******************************************************* //
+				widget.outerDiv 
+					.style('height', data.jqHeight + 'px')	//only for browser
+					.style('width', data.jqWidth + 'px')		//only for browser
+		
+				widget.svg 
+					.attr('height', data.jqHeight + 'px')
+					.attr('width', data.jqWidth + 'px')
+					
+				d3.select(widget.svg.node().parentNode).style('background-color', data.backgroundColor);
+				
+				// delete leftover elements from versions previously rendered
+				if (!widget.svg.empty()) JsUtils.resetElements(widget.svg, '*');
+		
+				// ********************************************* GRAPHIC GROUP ******************************************************* //
+		
+				const graphicGroup = widget.svg.append('g')
+					.attr('class', 'graphicGroup')
+					.attr('transform', `translate(${margin.left},${margin.top})`)
+					.attr('fill', textColor);
+		
+				const topGroup = graphicGroup.append('g').attr('class', 'topGroup')
+				topGroup.append('text')
+					.text('Status')
+					.style('font', titlesFont)
+					.attr('y', titlesHeight);
+		
+				const optimizationGroup = topGroup.append('g')
+					.attr('class', 'optimizationGroup')
+					.attr('transform', `translate(${additionalMarginsForNonTitles + circleDiameter + paddingRightOfCircle},${titlesHeight + paddingUnderTitle + stringValuesHeight})`);
+		
+				optimizationGroup.append('circle')
+					.attr('fill', data.optimizationEnabled ? enabledCircleColor : disabledCircleColor)
+					.attr('stroke', 'none')
+					.attr('r', circleRadius)
+					.attr('cx', -(circleRadius + paddingRightOfCircle))
+					.attr('cy', -circleRadius)
+		
+				optimizationGroup.append('text')
+					.text(data.optimizationEnabled ? 'Enabled' : 'Disabled')
+					.style('font', stringValuesFont)
+		
+				optimizationGroup.append('text')
+					.text('Optimization')
+					.style('font', labelsFont)
+					.attr('y', paddingUnderValues + labelsHeight);
+		
+				if (data.includeSpecifiedLead) {
+					const specifiedLeadGroup = topGroup.append('g')
+						.attr('class', 'specifiedLeadGroup')
+						.attr('transform', `translate(${additionalMarginsForNonTitles + circleDiameter + paddingRightOfCircle + optimizationWidth + paddingBetweenTopColumns},${titlesHeight + paddingUnderTitle + stringValuesHeight})`);
+			
+					specifiedLeadGroup.append('text')
+						.text(data.specifiedLead)
+						.style('font', stringValuesFont)
+			
+					specifiedLeadGroup.append('text')
+						.text('Specified Lead')
+						.style('font', labelsFont)
+						.attr('y', paddingUnderValues + labelsHeight);
+				}
+		
+			
+		
+		
+				const bottomGroup = graphicGroup.append('g')
+					.attr('class', 'bottomGroup')
+					.attr('transform', `translate(0, ${titlesHeight + paddingUnderTitle + stringValuesHeight + paddingUnderValues + labelsHeight + paddingBetweenSections})`)
+		
+				const timerSpot = bottomGroup.append('g').attr('class', 'timerSpot')
+				widget.timer = new Gauge(timerSpot, data.timerType, data.timerOnReason, data.timerPreset, data.timerTimeLeft);
+				widget.timer.create();
+		
+				const col1 = bottomGroup.append('g').attr('class', 'col1').attr('transform', `translate(${150 /* gaugeWidth */ + paddingRightOfGauge},${paddingUnderTitle + numValuesHeight})`)
+				col1.append('text')
+					.text(data.chillersRunning)
+					.style('font', numValuesFont)
+				col1.append('text')
+					.text('Running')
+					.style('font', labelsFont)
+					.attr('y', paddingUnderValues + labelsHeight)
+				col1.append('text')
+					.text(data.chillersCalled)
+					.style('font', numValuesFont)
+					.attr('y', paddingUnderValues + labelsHeight + paddingBetweenRows + numValuesHeight)
+				col1.append('text')
+					.text('Called')
+					.style('font', labelsFont)
+					.attr('y', ((paddingUnderValues + labelsHeight) * 2) + paddingBetweenRows + numValuesHeight)
+		
+		
+				const col2 = bottomGroup.append('g').attr('class', 'col2').attr('transform', `translate(${150 /* gaugeWidth */ + paddingRightOfGauge + runningWidth + paddingBetweenBottomColumns},${paddingUnderTitle + numValuesHeight})`)
+				col2.append('text')
+					.text(data.chillersAvailable)
+					.style('font', numValuesFont)
+				col2.append('text')
+					.text('Available')
+					.style('font', labelsFont)
+					.attr('y', paddingUnderValues + labelsHeight)
+				col2.append('text')
+					.text(data.chillersNeeded)
+					.style('font', numValuesFont)
+					.attr('y', paddingUnderValues + labelsHeight + paddingBetweenRows + numValuesHeight)
+				col2.append('text')
+					.text('Needed')
+					.style('font', labelsFont)
+					.attr('y', ((paddingUnderValues + labelsHeight) * 2) + paddingBetweenRows + numValuesHeight)
+		
+		
 
 		const meterGroup = graphicGroup.append('g').attr('class', 'meterGroup').attr('transform', `translate(${(data.graphicWidth / 2) - (meterWidth / 2)},${data.graphicHeight - meterObjHeight})`)
 		const meter = new Meter(
@@ -329,11 +326,11 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		const tooltipMargin = 3;
 		const minRightOfLabel = 8;
 		const verticalPadding = 3;
-		const greatestNumWidth = d3.max([getTextWidth(formatValueToPrecision(data.chillersOptHrs, 0), meterNumFont), getTextWidth(formatValueToPrecision(data.chillersStdHrs, 0), meterNumFont)])
-		const tooltipHeight = (tooltipMargin * 3) + ( getTextHeight(meter.titleFont) * 2 ) + verticalPadding;
-		const tooltipWidth = (tooltipMargin * 2) + getTextWidth('Opt Hrs:', meter.titleFont) + minRightOfLabel + greatestNumWidth;
-		const meterLeftTextWidth = getTextWidth(data.percentOptHrs, meterNumFont) + meter.horizontalTextPadding;
-		const meterRightTextWidth = getTextWidth(meter.title, meterTitleFont);
+		const greatestNumWidth = d3.max([JsUtils.getTextWidth(JsUtils.formatValueToPrecision(data.chillersOptHrs, 0), meterNumFont), JsUtils.getTextWidth(JsUtils.formatValueToPrecision(data.chillersStdHrs, 0), meterNumFont)])
+		const tooltipHeight = (tooltipMargin * 3) + ( JsUtils.getTextHeight(meter.titleFont) * 2 ) + verticalPadding;
+		const tooltipWidth = (tooltipMargin * 2) + JsUtils.getTextWidth('Opt Hrs:', meter.titleFont) + minRightOfLabel + greatestNumWidth;
+		const meterLeftTextWidth = JsUtils.getTextWidth(data.percentOptHrs, meterNumFont) + meter.horizontalTextPadding;
+		const meterRightTextWidth = JsUtils.getTextWidth(meter.title, meterTitleFont);
 		const sumWidthsOnBar = tooltipWidth + meterLeftTextWidth + meterRightTextWidth;
 		const leftoverSpaceOnBar = meter.barLength - sumWidthsOnBar;
 		const tooltipGroup = meterGroup.append('g').attr('class', 'meterGroup').attr('transform', `translate(${meterLeftTextWidth + (leftoverSpaceOnBar / 2)}, ${(meter.margin + meter.greatestTextHeight) - tooltipHeight})`).style('display', 'none');
@@ -353,13 +350,13 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 		const row1 = textGroup.append('g')
 			.attr('class', 'labelsColumn')
-			.attr('transform', `translate(0, ${getTextHeight(meter.numFont)})`);
+			.attr('transform', `translate(0, ${JsUtils.getTextHeight(meter.numFont)})`);
 		const row2 = textGroup.append('g')
 			.attr('class', 'numsColumn')
-			.attr('transform', `translate(0, ${( getTextHeight(meter.numFont) * 2 ) + verticalPadding})`);
+			.attr('transform', `translate(0, ${( JsUtils.getTextHeight(meter.numFont) * 2 ) + verticalPadding})`);
 
 		const labelsColumnX = 0;
-		const numsColumnX = getTextWidth('Opt Hrs:', meter.titleFont) + minRightOfLabel;
+		const numsColumnX = JsUtils.getTextWidth('Opt Hrs:', meter.titleFont) + minRightOfLabel;
 
 		//Min Label
 		row1.append('text')
@@ -368,7 +365,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.attr('x', labelsColumnX);
 		//Min Val
 		row1.append('text')
-			.text(formatValueToPrecision(data.chillersOptHrs, 0))
+			.text(JsUtils.formatValueToPrecision(data.chillersOptHrs, 0))
 			.style('font', meter.numFont)
 			.attr('x', numsColumnX);
 
@@ -379,7 +376,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.attr('x', labelsColumnX);
 		//Max Val
 		row2.append('text')
-			.text(formatValueToPrecision(data.chillersStdHrs, 0))
+			.text(JsUtils.formatValueToPrecision(data.chillersStdHrs, 0))
 			.style('font', meter.numFont)
 			.attr('x', numsColumnX);
 
@@ -388,15 +385,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		const meterElement = meter.create();
 		meterElement.on('mouseover', () => tooltipGroup.style('display', 'block')).on('mouseout', () => tooltipGroup.style('display', 'none'));
 
-
-
-
 		widget.svg.selectAll('text').attr('fill', textColor)
-
-    
-
-
-
 	};
 
 

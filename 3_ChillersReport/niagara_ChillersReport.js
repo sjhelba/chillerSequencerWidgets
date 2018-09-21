@@ -39,7 +39,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		//return false if nothing prompted true
 		return false;
 	};
-	const margin = 5;
+	const margin = 0;
 	const columnIndeces = {
 		Item: 0,
 		Status: 1,
@@ -269,6 +269,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 	const renderWidget = (widget, data) => {
 		// ********************************************* SIZING ETC ******************************************************* //
+		const darkTextColor = '#404040'
 		const tableWidth = 680;
 		const scrollbarWidth = 15 //approximate, changes per browser
 		const colWidth = ((tableWidth - scrollbarWidth) / 6);
@@ -278,7 +279,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		const tableHeight = data.graphicHeight;
 		const headerHeight = 30;
 		const maxTbodyHeight = tableHeight - headerHeight;
-		const rowHeight = maxTbodyHeight / 8;
+		const rowHeight = 26;
 
 		const detailsHeight = 180;
 		const openRowHeight = detailsHeight + rowHeight;
@@ -432,7 +433,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				.attr('class', function() {'innerCellDiv innerCellDiv' + this.parentNode.getAttribute('data-index') })
 				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
 				.style('background-color', d => d.displayValue === 'Running' ? runningColor : d.displayValue === 'Unavailable' ? unavailableColor : 'none')
-				.style('color', d => d.displayValue === 'Running' || d.displayValue === 'Unavailable' ? 'white' : 'black')
+				.style('color', d => d.displayValue === 'Running' || d.displayValue === 'Unavailable' ? 'white' : darkTextColor)
 				.style('border-radius', '8px')
 				.style('word-break', 'break-all')
 				.style('word-wrap', 'break-word')
@@ -552,12 +553,13 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			const marginLeftOfDT = 15;
 			const DTWidth = JsUtils.getTextWidth('8.8 °F', fonts.detailsValue)
 			const meterWidth = ((tableWidth - scrollbarWidth) - ( (detailsHorizontalMargin * 4) + (marginLeftOfDT * 2) + (DTWidth * 2) )) / 3;
-			const detailsVerticalMargin = 10;
 			const marginBelowDetailsValue = 2;
 			const detailsSectionTitleHeight = JsUtils.getTextHeight(fonts.detailsSectionTitle);
 			const detailsValueHeight = JsUtils.getTextHeight(fonts.detailsValue);
 			const detailsLabelHeight = JsUtils.getTextHeight(fonts.detailsLabel);
-			const meterHeight = (detailsHeight - ( (detailsVerticalMargin * 6) + detailsSectionTitleHeight )) / 4
+			const meterHeight = 6;
+			const meterObjHeight = Meter.getHeightFromMeterHeight(meterHeight, fonts.detailsLabel, fonts.detailsValue, fonts.detailsValue);
+			const detailsVerticalMargin = (detailsHeight - ( (meterObjHeight * 4) + detailsSectionTitleHeight )) / 6
 			const detailsColumnIndex = columnIndeces.Details;
 
 
@@ -572,7 +574,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			const detailsCol3s = svgs.append('g')
 				.attr('class', 'detailsCol3s')
 				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
-				.attr('transform', `translate(${(detailsHorizontalMargin * 2) + (meterWidth * 2) + marginLeftOfDT}, ${rowHeight + detailsValueHeight + detailsSectionTitleHeight + (detailsVerticalMargin * 4) + detailsSectionTitleHeight + (detailsValueHeight * 3) + (marginBelowDetailsValue * 3) + meterHeight})`)
+				.attr('transform', `translate(${(detailsHorizontalMargin * 2) + (meterWidth * 2) + marginLeftOfDT}, ${rowHeight + detailsValueHeight + detailsSectionTitleHeight + (detailsVerticalMargin * 4) + detailsSectionTitleHeight + (detailsValueHeight * 3) + (marginBelowDetailsValue * 3) + meterObjHeight})`)
 			const detailsCol4s = svgs.append('g')
 				.attr('class', 'detailsCol4s')
 				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
@@ -580,21 +582,21 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			const detailsCol5s = svgs.append('g')
 				.attr('class', 'detailsCol5s')
 				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
-				.attr('transform', `translate(${(detailsHorizontalMargin * 3) + (meterWidth * 3) + (marginLeftOfDT * 2) + DTWidth}, ${rowHeight + detailsValueHeight + detailsSectionTitleHeight + (detailsVerticalMargin * 4) + detailsSectionTitleHeight + (detailsValueHeight * 3) + (marginBelowDetailsValue * 3) + meterHeight})`)
+				.attr('transform', `translate(${(detailsHorizontalMargin * 3) + (meterWidth * 3) + (marginLeftOfDT * 2) + DTWidth}, ${rowHeight + detailsValueHeight + detailsSectionTitleHeight + (detailsVerticalMargin * 4) + detailsSectionTitleHeight + (detailsValueHeight * 3) + (marginBelowDetailsValue * 3) + meterObjHeight})`)
 
 			//Section Titles
 			detailsCol1s.append('text')
 				.style('font', fonts.detailsSectionTitle)
 				.attr('fill', 'white')
-				.text('STATUS')
+				.text('Status')
 			detailsCol2s.append('text')
 				.style('font', fonts.detailsSectionTitle)
 				.attr('fill', 'white')
-				.text('EVAPORATOR')
+				.text('Evaporator')
 			detailsCol4s.append('text')
 				.style('font', fonts.detailsSectionTitle)
 				.attr('fill', 'white')
-				.text('CONDENSER')
+				.text('Condenser')
 
 			
 			//Delta Ts
@@ -610,7 +612,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				.style('font', fonts.detailsLabel)
 				.attr('fill', 'white')
 				.attr('y', marginBelowDetailsValue + detailsLabelHeight)
-				.text('DT')
+				.text('ΔT')
 
 			detailsCol5s.append('text')
 				.style('font', fonts.detailsValue)
@@ -624,19 +626,20 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				.style('font', fonts.detailsLabel)
 				.attr('fill', 'white')
 				.attr('y', marginBelowDetailsValue + detailsLabelHeight)
-				.text('DT')
-
+				.text('ΔT')
+				
 
 			//Tooltip Location
 			const arrayOfChillerDetails = [];
 			const tooltipGroups = detailsCol1s.append('g')
 				.attr('class', function() {return `tooltipGroup tooltipGroup${this.parentNode.getAttribute('data-index')}`})
 				.attr('data-index', function(){return this.parentNode.getAttribute('data-index')})
-				.attr('transform', `translate(0, ${detailsVerticalMargin + detailsValueHeight + marginBelowDetailsValue + meterHeight + (detailsVerticalMargin * 3)})`)
+				.attr('transform', `translate(0, ${detailsVerticalMargin + detailsValueHeight + marginBelowDetailsValue + meterObjHeight + (detailsVerticalMargin * 2)})`)
 				.each(function() {
 					const chillerIndex = this.getAttribute('data-index')
 					arrayOfChillerDetails[chillerIndex] = data.sortableTableData[chillerIndex][columnIndeces.Details].value;
 				})
+		
 
 
 			//Col 1s Meter
@@ -646,7 +649,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 
 			arrayOfChillerDetails.forEach((chillerDetails, index) => {
 				const chillerStatus = chillerDetails.status;
-				const rlaMeter = new Meter(widget.graphicDiv.select('.col1MeterGroup' + index), widget.graphicDiv.select('.tooltipGroup' + index), meterBackgroundColor, rlaMeterColor, 'white', meterHeight, meterWidth, '%RLA', chillerStatus.units, chillerStatus.precision, fonts.detailsLabel, fonts.detailsValue, fonts.detailsValue, chillerStatus.value, chillerStatus.min, chillerStatus.max, true, null, widget.hoveredMeter === '.col1MeterGroup' + index);
+				const rlaMeter = new Meter(widget.graphicDiv.select('.col1MeterGroup' + index), widget.graphicDiv.select('.tooltipGroup' + index), meterBackgroundColor, rlaMeterColor, 'white', meterObjHeight, meterWidth, '%RLA', chillerStatus.units, chillerStatus.precision, fonts.detailsLabel, fonts.detailsValue, fonts.detailsValue, chillerStatus.value, chillerStatus.min, chillerStatus.max, true, null, widget.hoveredMeter === '.col1MeterGroup' + index);
 				rlaMeter.create();
 				rlaMeter.callbackOnHover(() => widget.hoveredMeter = '.col1MeterGroup' + index);
 				rlaMeter.callbackOnUnhover(() => widget.hoveredMeter = 'none')
@@ -661,11 +664,11 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				.data(['Dp', 'Flow', 'Lwt', 'Ewt'])
 				.enter().append('g')
 					.attr('class', function(d) {return `meterGroup col2MeterGroup${this.parentNode.getAttribute('data-index') + d}`})
-					.attr('transform', (d, i) => `translate(0, ${(meterHeight * i) + (detailsVerticalMargin * i)})`)
+					.attr('transform', (d, i) => `translate(0, ${(meterObjHeight * i) + (detailsVerticalMargin * i)})`)
 					.each(function(d, i) {
 							const index = this.parentNode.getAttribute('data-index');
 							const typeDetails = arrayOfChillerDetails[index].evaporator[d.toLowerCase()];
-							const col2Meters = new Meter(widget.graphicDiv.select('.col2MeterGroup' + index + d), widget.graphicDiv.select('.tooltipGroup' + index), meterBackgroundColor, i%2 ? evenEvapMeterColor : oddEvapMeterColor, 'white', meterHeight, meterWidth, d, typeDetails.units, typeDetails.precision, fonts.detailsLabel, fonts.detailsValue, fonts.detailsValue, typeDetails.value, typeDetails.min, typeDetails.max, true, typeDetails.design, widget.hoveredMeter === '.col2MeterGroup' + index + d);
+							const col2Meters = new Meter(widget.graphicDiv.select('.col2MeterGroup' + index + d), widget.graphicDiv.select('.tooltipGroup' + index), meterBackgroundColor, i%2 ? evenEvapMeterColor : oddEvapMeterColor, 'white', meterObjHeight, meterWidth, d, typeDetails.units, typeDetails.precision, fonts.detailsLabel, fonts.detailsValue, fonts.detailsValue, typeDetails.value, typeDetails.min, typeDetails.max, true, typeDetails.design, widget.hoveredMeter === '.col2MeterGroup' + index + d);
 							col2Meters.create();
 							col2Meters.callbackOnHover(() => widget.hoveredMeter = '.col2MeterGroup' + index + d);
 							col2Meters.callbackOnUnhover(() => widget.hoveredMeter = 'none')
@@ -680,11 +683,11 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 				.data(['Dp', 'Flow', 'Ewt', 'Lwt'])
 				.enter().append('g')
 					.attr('class', function(d) {return `meterGroup col4MeterGroup${this.parentNode.getAttribute('data-index') + d}`})
-					.attr('transform', (d, i) => `translate(0, ${(meterHeight * i) + (detailsVerticalMargin * i)})`)
+					.attr('transform', (d, i) => `translate(0, ${(meterObjHeight * i) + (detailsVerticalMargin * i)})`)
 					.each(function(d, i) {
 							const index = this.parentNode.getAttribute('data-index');
 							const typeDetails = arrayOfChillerDetails[index].condenser[d.toLowerCase()];
-							const col4Meters = new Meter(widget.graphicDiv.select('.col4MeterGroup' + index + d), widget.graphicDiv.select('.tooltipGroup' + index), meterBackgroundColor, i%2 ? evenCondMeterColor : oddCondMeterColor, 'white', meterHeight, meterWidth, d, typeDetails.units, typeDetails.precision, fonts.detailsLabel, fonts.detailsValue, fonts.detailsValue, typeDetails.value, typeDetails.min, typeDetails.max, true, typeDetails.design, widget.hoveredMeter === '.col4MeterGroup' + index + d);
+							const col4Meters = new Meter(widget.graphicDiv.select('.col4MeterGroup' + index + d), widget.graphicDiv.select('.tooltipGroup' + index), meterBackgroundColor, i%2 ? evenCondMeterColor : oddCondMeterColor, 'white', meterObjHeight, meterWidth, d, typeDetails.units, typeDetails.precision, fonts.detailsLabel, fonts.detailsValue, fonts.detailsValue, typeDetails.value, typeDetails.min, typeDetails.max, true, typeDetails.design, widget.hoveredMeter === '.col4MeterGroup' + index + d);
 							col4Meters.create();
 							col4Meters.callbackOnHover(() => widget.hoveredMeter = '.col4MeterGroup' + index + d);
 							col4Meters.callbackOnUnhover(() => widget.hoveredMeter = 'none')
@@ -730,7 +733,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.style('overflow', 'hidden');
 
 		that.getSubscriber().attach('changed', function (prop, cx) { render(that) });
-		setInterval(() => render(that), 10000)
+		setInterval(() => render(that), 8000)
 
 	};
 
