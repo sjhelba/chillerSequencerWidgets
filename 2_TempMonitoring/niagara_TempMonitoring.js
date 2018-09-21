@@ -13,7 +13,6 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		return somethingIsNotEquivalent;
 	};
 	const needToRedrawWidget = (widget, newData) => {
-		console.log('checking need to redraw')
 		const lastData = widget.data;
 		// check primitives for equivalence
 		if (!arePrimitiveValsInObjsSame(lastData, newData)) return true;
@@ -172,7 +171,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 		data.CDWSetpointTrendData = [];
 
 		const trendDataByHistoryIndex = ['CHWSupplyTrendData', 'CHWSetpointTrendData', 'CHWSequenceTrendData', 'CDWSupplyTrendData', 'CDWSetpointTrendData'];
-		const batchResolveTrends = ['history:^System_ChwSupply', 'history:^System_ChwSupplySp', 'history:^System_ChwSupplySq', 'history:^System_CdwSupply', 'history:^System_CdwSupplySp'];
+		const batchResolveTrends = ['history:^System_ChwLwt', 'history:^System_ChwLwtSp', 'history:^System_ChwLwtSq', 'history:^System_CdwEwt', 'history:^System_CdwEwtSp'];
 		const batchResolve = new baja.BatchResolve(batchResolveTrends);
 		const batchSubscriber = new baja.Subscriber();
 
@@ -942,13 +941,10 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 	////////////////////////////////////////////////////////////////
 
 	function render(widget, force) {
-		const rightNow = new Date()
-		console.log('render called at ' + rightNow.getHours() + ':' + rightNow.getMinutes() + ':' + rightNow.getSeconds())
 		// invoking setupDefinitions, then returning value from successful promise to renderWidget func
 		return setupDefinitions(widget)
 			.then(data => {
 				if (force || !widget.data || needToRedrawWidget(widget, data)){
-					console.log('renderingWidget')
 					renderWidget(widget, data);	
 				}
 				widget.data = data;
@@ -972,7 +968,7 @@ define(['bajaux/Widget', 'bajaux/mixin/subscriberMixIn', 'nmodule/COREx/rc/d3/d3
 			.style('overflow', 'hidden')
 
 		that.getSubscriber().attach('changed', function (prop, cx) { render(that) });
-		setInterval(() => render(that), 10000)
+		setInterval(() => render(that), 8000)
 	};
 
 
